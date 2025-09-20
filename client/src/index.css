@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Noto+Sans:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #7f13ec;
+}
+
+.gradient-bg {
+  background: linear-gradient(180deg, #f3e8ff 0%, rgba(243, 232, 255, 0) 100%);
+}
+
+body {
+  font-family: "Manrope", "Noto Sans", sans-serif;
+}
