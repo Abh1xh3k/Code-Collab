@@ -76,20 +76,218 @@ server/
     └── messageRoutes.js
 ```
 
-## API Endpoints
+## API Documentation
 
-### Authentication
-- POST `/api/auth/signup` - Register new user
-- POST `/api/auth/login` - User login
+### Authentication Endpoints
 
-### Rooms
-- POST `/api/room/create` - Create new room
-- POST `/api/room/:roomId/join` - Join existing room
-- GET `/api/room/:roomId` - Get room details
+#### Register New User
+```http
+POST /api/auth/signup
+Content-Type: application/json
+```
+**Request Body:**
+```json
+{
+  "username": "string",
+  "email": "string",
+  "password": "string"
+}
+```
+**Response:** 201 Created
+```json
+{
+  "token": "string",
+  "user": {
+    "id": "string",
+    "username": "string",
+    "email": "string"
+  }
+}
+```
 
-### Messages
-- POST `/api/messages/:roomId` - Send message
-- GET `/api/messages/:roomId` - Get room messages
+#### Login User
+```http
+POST /api/auth/login
+Content-Type: application/json
+```
+**Request Body:**
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+**Response:** 200 OK
+```json
+{
+  "token": "string",
+  "user": {
+    "id": "string",
+    "username": "string",
+    "email": "string",
+    "message": "Login Successful"
+  }
+}
+```
+
+### Room Endpoints
+
+#### Create Room
+```http
+POST /api/room/create
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+**Request Body:**
+```json
+{
+  "name": "string",
+  "isPrivate": "boolean",
+  "joinCode": "string"
+}
+```
+**Response:** 201 Created
+```json
+{
+  "message": "Room Created Successfully",
+  "room": "roomId"
+}
+```
+
+#### Join Room
+```http
+POST /api/room/join
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+**Request Body:**
+```json
+{
+  "roomId": "string",
+  "joinCode": "string"
+}
+```
+**Response:** 200 OK
+```json
+{
+  "message": "Joined Room Successfully"
+}
+```
+
+### Message Endpoints
+
+#### Send Message
+```http
+POST /api/chat/sendMessage
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+**Request Body:**
+```json
+{
+  "roomId": "string",
+  "text": "string"
+}
+```
+**Response:** 201 Created
+```json
+{
+  "message": "Message Sent successfully",
+  "data": {
+    "roomId": "string",
+    "userId": "string",
+    "text": "string"
+  }
+}
+```
+
+#### Get Messages
+```http
+GET /api/chat/getMessage/:roomId
+Authorization: Bearer <token>
+```
+**Response:** 200 OK
+```json
+{
+  "messages": [
+    {
+      "userId": {
+        "username": "string",
+        "email": "string"
+      },
+      "text": "string",
+      "createdAt": "date"
+    }
+  ]
+}
+```
+
+### Session Endpoints
+
+#### Get Session
+```http
+GET /api/session/:roomId
+Authorization: Bearer <token>
+```
+**Response:** 200 OK
+```json
+{
+  "roomId": "string",
+  "content": "string",
+  "language": "string",
+  "updatedBy": "string",
+  "updatedAt": "date"
+}
+```
+
+#### Update Session
+```http
+PUT /api/session/:roomId
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+**Request Body:**
+```json
+{
+  "content": "string",
+  "language": "string"
+}
+```
+**Response:** 200 OK
+```json
+{
+  "roomId": "string",
+  "content": "string",
+  "language": "string",
+  "updatedBy": "string",
+  "updatedAt": "date"
+}
+```
+
+### User Endpoints
+
+#### Get User Profile
+```http
+GET /api/user/profile
+Authorization: Bearer <token>
+```
+**Response:** 200 OK
+```json
+{
+  "username": "string",
+  "email": "string"
+}
+```
+
+### Error Responses
+
+All endpoints may return the following error responses:
+
+- **400 Bad Request:** When required fields are missing or invalid
+- **401 Unauthorized:** When authentication token is missing or invalid
+- **403 Forbidden:** When user doesn't have permission to access a resource
+- **404 Not Found:** When requested resource doesn't exist
+- **500 Server Error:** When an unexpected error occurs on the server
 
 ## Models
 
