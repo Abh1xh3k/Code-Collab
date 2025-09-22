@@ -5,6 +5,7 @@ import Login from "./auth/Login";
 import Signup from "./auth/Signup";
 import WorkspaceEditor from "./workspace/Editor";
 import Room from "./room/Room";
+import DoodleModal from "./components/DoodleModal";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/editor" element={<WorkspaceEditor />} />
         <Route path="/room" element={<Room />} /> {/* Fixed Router to Route */}
+        <Route path="board" element ={<DoodleModal/>}/>
       </Routes>
     </Router>
   );

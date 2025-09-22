@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
+import DoodleModal from '../components/DoodleModal';
+import { useNavigate } from 'react-router-dom';
 
 const WorkspaceEditor = () => {
+  const navigate=useNavigate();
   const [language, setLanguage] = useState('javascript');
   const [code, setCode] = useState('// Welcome to Collaborative IDE\n\nfunction example() {\n  console.log("Hello, World!");\n}\n');
+  const [isDoodleOpen, setIsDoodleOpen] = useState(false);
 
   // Handle editor initialization
   const handleEditorDidMount = (editor, monaco) => {
@@ -46,10 +50,24 @@ const WorkspaceEditor = () => {
                 <option value="html">HTML</option>
               </select>
             </div>
-            <button className="flex items-center gap-2 rounded-lg bg-[var(--primary-color)] px-4 py-2 text-white hover:bg-purple-700">
-              <span className="material-symbols-outlined">play_arrow</span>
-              <span>Run</span>
-            </button>
+            <div className="flex gap-2">
+              <button className="flex items-center gap-2 rounded-lg bg-[var(--primary-color)] px-4 py-2 text-white hover:bg-purple-700">
+                <span className="material-symbols-outlined">play_arrow</span>
+                <span>Run</span>
+              </button>
+              <button 
+                onClick={() => setIsDoodleOpen(true)}
+                className="flex items-center gap-2 rounded-lg px-4 py-2 text-gray-700 transition-all duration-200
+                  bg-gradient-to-r from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100
+                  border border-purple-200 hover:border-purple-300 hover:shadow-md
+                  transform hover:scale-105"
+              >
+                <span className="material-symbols-outlined text-purple-600">draw</span>
+                <span className="font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  Whiteboard
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
@@ -101,6 +119,10 @@ const WorkspaceEditor = () => {
           </div>
         </aside>
       </main>
+      <DoodleModal 
+        isOpen={isDoodleOpen}
+        onClose={() => setIsDoodleOpen(false)}
+      />
     </div>
   );
 };

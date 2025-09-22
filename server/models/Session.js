@@ -13,7 +13,7 @@ const SessionSchema= new Schema({
         type:String,
         default:"javascript",
     },
-    updatedAt:{
+    updatedBy:{
         type:Schema.Types.ObjectId,
         ref:"User",
         required:false,
