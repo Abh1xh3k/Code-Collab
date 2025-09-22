@@ -1,8 +1,7 @@
 import { mongoose } from "mongoose";
-const mongoURI="mongodb://localhost:27017/CodeCollab";
+const mongoURI = process.env.MONGODB_URI;
 
-
-const connectDb=async()=>{
+const connectDb = async () => {
     try{
         await mongoose.connect(mongoURI)
             console.log("MongoDb connected")
