@@ -1,10 +1,145 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
+import RoomCreatedModal from '../components/RoomCreatedModal';
+import axios from 'axios';
 const Room = () => {
-  const handleSubmit = (e) => {
+
+  const navigate=useNavigate();
+  const [mode, setMode] = useState('create'); // 'create' or 'join'
+  const [showModal, setShowModal] = useState(false);
+  const [createdRoomData, setCreatedRoomData] = useState(null);
+  
+  const [createData, setCreateData] = useState({
+    name: '',
+    isPrivate: true,
+    joinCode: ''
+  });
+  
+  const [joinData, setJoinData] = useState({
+    roomId: '',
+    joinCode: ''
+  });
+  
+  const handleCreateInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setCreateData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    
+  };
+  
+  const handleJoinInputChange = (e) => {
+    const { name, value } = e.target;
+    setJoinData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCreateRoom = async(e) => {
     e.preventDefault();
-    // Handle room creation
+    // console.log('Create room data:', createData);
+    
+    try{
+      // Get the token from localStorage
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        alert('Please login first');
+        return;
+      }
+      
+      const res = await axios.post('http://localhost:5000/api/room/create', createData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        withCredentials: true
+      });
+      
+      console.log('Room created:', res.data);
+      
+      // Store the current room ID for future operations
+      localStorage.setItem('currentRoomId', res.data.room);
+      
+      // Show the modal with actual room data
+      setCreatedRoomData({
+        roomId: res.data.room,
+        joinCode: createData.joinCode
+      });
+      setShowModal(true);
+      
+      // Reset form
+      setCreateData({
+        name: '',
+        isPrivate: true,
+        joinCode: ''
+      });
+      
+    } catch(err) {
+      console.log('Full error:', err);
+      console.log('Error response:', err.response?.data);
+      
+      if (err.response?.status === 401) {
+        alert('Session expired. Please login again.');
+        // Optionally redirect to login
+        // navigate('/login');
+      } else {
+        alert('Failed to create room. Please try again.');
+      }
+    }
+  };
+  
+  const handleJoinRoom = async(e) => {
+    e.preventDefault();
+    console.log('Join room data:', joinData);
+    
+    try{
+      // Get the token from localStorage
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        alert('Please login first');
+        return;
+      }
+      
+      const res = await axios.post('http://localhost:5000/api/room/join', joinData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        withCredentials: true
+      });
+      
+      console.log('Joined room:', res.data);
+      
+      // Store the current room ID for future operations
+      localStorage.setItem('currentRoomId', joinData.roomId);
+      
+      alert('Successfully joined room!');
+      navigate('/editor');
+      
+      // Reset form
+      setJoinData({
+        roomId: '',
+        joinCode: ''
+      });
+      
+    } catch(err) {
+      console.log('Full error:', err);
+      console.log('Error response:', err.response?.data);
+      
+      if (err.response?.status === 401) {
+        alert('Session expired. Please login again.');
+      } else if (err.response?.status === 404) {
+        alert('Room not found. Please check the Room ID.');
+      } else if (err.response?.status === 403) {
+        alert('Invalid join code. Please check the password.');
+      } else {
+        alert('Failed to join room. Please try again.');
+      }
+    }
   };
   
 
@@ -21,10 +156,7 @@ const Room = () => {
         </div>
         
         <nav className="flex items-center gap-6 text-sm font-medium text-gray-600">
-          <Link to="#" className="hover:text-[var(--primary-color)] transition-colors">Dashboard</Link>
-          <Link to="#" className="hover:text-[var(--primary-color)] transition-colors">Projects</Link>
-          <Link to="#" className="text-[var(--primary-color)] font-semibold">Rooms</Link>
-          <Link to="#" className="hover:text-[var(--primary-color)] transition-colors">Settings</Link>
+
         </nav>
 
         <div className="flex items-center gap-4">
@@ -49,45 +181,125 @@ const Room = () => {
               <p className="mt-2 text-sm text-gray-500">Create a new room or join an existing one to start collaborating.</p>
             </div>
 
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <div>
-                <label className="sr-only" htmlFor="room-name">Room Name / Code</label>
-                <input
-                  className="form-input w-full rounded-lg border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] focus:ring-opacity-50 transition duration-200"
-                  id="room-name"
-                  name="room-name"
-                  placeholder="Enter Room Name or Code"
-                  required
-                  type="text"
-                />
-              </div>
-              
-              <div>
-                <label className="sr-only" htmlFor="password">Password</label>
-                <input
-                  className="form-input w-full rounded-lg border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] focus:ring-opacity-50 transition duration-200"
-                  id="password"
-                  name="password"
-                  placeholder="Password (optional)"
-                  type="password"
-                />
-              </div>
+            {/* Mode Toggle Buttons */}
+            <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setMode('create')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  mode === 'create' 
+                    ? 'bg-white text-[var(--primary-color)] shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Create Room
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('join')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  mode === 'join' 
+                    ? 'bg-white text-[var(--primary-color)] shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Join Room
+              </button>
+            </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            {/* Create Room Form */}
+            {mode === 'create' && (
+              <form className="space-y-6" onSubmit={handleCreateRoom}>
+                <div>
+                  <label className="sr-only" htmlFor="name">Room Name</label>
+                  <input
+                    className="form-input w-full rounded-lg border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] focus:ring-opacity-50 transition duration-200"
+                    id="name"
+                    name="name"
+                    placeholder="Enter Room Name"
+                    required
+                    type="text"
+                    value={createData.name}
+                    onChange={handleCreateInputChange}
+                  />
+                </div>
+                
+                <div>
+                  <label className="sr-only" htmlFor="joinCode">Join Code</label>
+                  <input
+                    className="form-input w-full rounded-lg border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] focus:ring-opacity-50 transition duration-200"
+                    id="joinCode"
+                    name="joinCode"
+                    placeholder="Set Join Code (Password)"
+                    type="password"
+                    required
+                    value={createData.joinCode}
+                    onChange={handleCreateInputChange}
+                  />
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isPrivate"
+                    name="isPrivate"
+                    checked={createData.isPrivate}
+                    onChange={handleCreateInputChange}
+                    className="h-4 w-4 text-[var(--primary-color)] focus:ring-[var(--primary-color)] border-gray-300 rounded"
+                  />
+                  <label htmlFor="isPrivate" className="ml-2 block text-sm text-gray-700">
+                    Make room private
+                  </label>
+                </div>
+
                 <button 
-                  className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm btn-primary transition-all duration-200 transform hover:scale-105"
+                  className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm btn-primary transition-all duration-200 transform hover:scale-105"
                   type="submit"
                 >
                   Create Room
                 </button>
+              </form>
+            )}
+
+            {/* Join Room Form */}
+            {mode === 'join' && (
+              <form className="space-y-6" onSubmit={handleJoinRoom}>
+                <div>
+                  <label className="sr-only" htmlFor="roomId">Room ID</label>
+                  <input
+                    className="form-input w-full rounded-lg border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] focus:ring-opacity-50 transition duration-200"
+                    id="roomId"
+                    name="roomId"
+                    placeholder="Enter Room ID"
+                    required
+                    type="text"
+                    value={joinData.roomId}
+                    onChange={handleJoinInputChange}
+                  />
+                </div>
+                
+                <div>
+                  <label className="sr-only" htmlFor="joinCode">Join Code</label>
+                  <input
+                    className="form-input w-full rounded-lg border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] focus:ring-opacity-50 transition duration-200"
+                    id="joinCode"
+                    name="joinCode"
+                    placeholder="Enter Join Code (Password)"
+                    type="password"
+                    required
+                    value={joinData.joinCode}
+                    onChange={handleJoinInputChange}
+                  />
+                </div>
+
                 <button 
-                  className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg shadow-sm btn-secondary transition-all duration-200 transform hover:scale-105"
-                  type="button"
+                  className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm btn-primary transition-all duration-200 transform hover:scale-105"
+                  type="submit"
                 >
                   Join Room
                 </button>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
           
           <p className="mt-8 text-center text-xs text-gray-400">
@@ -99,6 +311,13 @@ const Room = () => {
           </p>
         </div>
       </main>
+
+      {/* Room Created Modal */}
+      <RoomCreatedModal 
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        roomData={createdRoomData}
+      />
     </div>
   );
 };

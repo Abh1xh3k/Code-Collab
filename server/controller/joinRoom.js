@@ -13,6 +13,9 @@ export const joinroom= async(req,res)=>{
     if(!room){
         return res.status(404).json({message:"Room Not Found"});
     }
+     if(!room){
+        return socket.emit("error", "Room does not exist");
+    }
     
     const isMatch=await bcrypt.compare(joinCode,room.joinCodeHash);
     if(!isMatch){

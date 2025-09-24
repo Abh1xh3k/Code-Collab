@@ -1,16 +1,13 @@
-import React, { useCallback } from 'react';
-import { Tldraw, useFileSystem } from '@tldraw/tldraw';
+import React from 'react';
+import { Tldraw } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
 
 const DoodleModal = ({ isOpen, onClose }) => {
-  // Setup persistence
-  const fileSystemEvents = useFileSystem();
-
   // Handle store change
-  const handleMount = useCallback((app) => {
+  const handleMount = (app) => {
     // You can access the store and app instance here
     console.log('Tldraw mounted:', app);
-  }, []);
+  };
 
   if (!isOpen) return null;
 
@@ -30,12 +27,7 @@ const DoodleModal = ({ isOpen, onClose }) => {
           <Tldraw 
             persistenceKey="code-collab-whiteboard"
             onMount={handleMount}
-            {...fileSystemEvents}
             autoFocus
-            showMenu={true}
-            showStyles={true}
-            showZoom={true}
-            showTools={true}
           />
         </div>
       </div>
