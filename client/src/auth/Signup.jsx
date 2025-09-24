@@ -1,8 +1,56 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Signup = () => {
-    const navigate= useNavigate();
+    const navigate = useNavigate();
+    
+    // Form state management
+    const [user, setUser] = useState({
+        username: '',
+        email: '',
+        password: ''
+    });
+    
+    const [error, setError] = useState('');
+    
+    // Handle input changes
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setUser(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+    
+    // Handle form submission
+    const handleSubmit = async(e) => {
+        e.preventDefault();
+        setError(''); // Clear previous errors
+        console.log('Sending data:', user);
+        try{
+          const res= await axios.post('http://localhost:5000/api/auth/signup',user,{
+            headers:{
+              'Content-Type':'application/json'
+            },
+            withCredentials:true
+          })
+          console.log('Success:', res.data);
+          // Handle successful signup
+          navigate('/login'); // or wherever you want to redirect
+        }catch(err){
+          console.log('Full error:', err);
+          console.log('Error response:', err.response?.data);
+          console.log('Error status:', err.response?.status);
+          
+          // Set error message for user to see
+          if (err.response?.data?.message) {
+            setError(err.response.data.message);
+          } else {
+            setError('Something went wrong. Please try again.');
+          }
+        }
+    };
   return (
     <div className="flex min-h-screen w-full items-center justify-center font-manrope">
       <div className="grid w-full max-w-6xl grid-cols-1 overflow-hidden rounded-2xl bg-white shadow-xl lg:grid-cols-2">
@@ -31,24 +79,54 @@ const Signup = () => {
             <span className="mx-4 flex-shrink text-sm text-gray-400">OR</span>
             <div className="flex-grow border-t border-gray-200"></div>
           </div>
-          <form action="#" className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
+                {error}
+              </div>
+            )}
             <div>
-              <label className="sr-only" htmlFor="name">Full Name</label>
-              <input className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500" id="name" placeholder="Full Name" type="text"/>
+              <label className="sr-only" htmlFor="username">Username</label>
+              <input 
+                className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500" 
+                id="username" 
+                name="username"
+                placeholder="Username" 
+                type="text"
+                value={user.username}
+                onChange={handleInputChange}
+              />
             </div>
             <div>
               <label className="sr-only" htmlFor="email">Email</label>
-              <input className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500" id="email" placeholder="Email" type="email"/>
+              <input 
+                className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500" 
+                id="email" 
+                name="email"
+                placeholder="Email" 
+                type="email"
+                value={user.email}
+                onChange={handleInputChange}
+              />
             </div>
             <div>
               <label className="sr-only" htmlFor="password">Password</label>
-              <input className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500" id="password" placeholder="Password" type="password"/>
+              <input 
+                className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500" 
+                id="password" 
+                name="password"
+                placeholder="Password" 
+                type="password"
+                value={user.password}
+                onChange={handleInputChange}
+              />
             </div>
-            <div className="flex items-center">
-              <input className="h-4 w-4 rounded border-gray-300 text-[var(--primary-color)] focus:ring-purple-500" id="terms" type="checkbox"/>
-              <label className="ml-2 block text-sm text-gray-700" htmlFor="terms">I agree to the Terms and Privacy Policy</label>
-            </div>
-            <button className="w-full rounded-lg bg-[var(--primary-color)] py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-700" type="submit">Create Account</button>
+            <button 
+              className="w-full rounded-lg bg-[var(--primary-color)] py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-700" 
+              type="submit"
+            >
+              Create Account
+            </button>
           </form>
           <p className="mt-8 text-center text-sm text-gray-500">
             Already have an account? <a 

@@ -1,0 +1,231 @@
+import React, { useState } from 'react';
+
+const ProfileEdit = () => {
+  const [formData, setFormData] = useState({
+    name: 'Sophia Bennett',
+    email: 'sophia.bennett@example.com',
+    jobTitle: 'Software Engineer',
+    company: 'CodeCollab Inc.',
+    location: 'San Francisco, CA',
+    bio: 'Passionate software engineer with a love for building collaborative tools and elegant user interfaces.'
+  });
+
+  const [profileImage, setProfileImage] = useState("https://lh3.googleusercontent.com/aida-public/AB6AXuCY8kMgxV9lLJruhpmwvRBZLjrcSAXqd8lTr6XbBdmjI_Y1D0pbKQM3j7R5PCo2YqsMKhgeW4oCdyyqkGV5N_UrW_mAxKJLvgbNDm5ho9lRaBG1BU_VBiaOWzoc5fh8sEuASF1xJ90oW1IfLk7EGMYs58WrW--WhbYoeohxGHyUWDOppxOYsUtbc90ZZhcqF0GQ3fGIGDz9la66daPwbD_4yEl2mBJA_3AwhLQ3KRomc0haFf9M7nFWoLukxwqj8lzD-U6P_sJ63x8");
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfileImage(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const triggerImageUpload = () => {
+    document.getElementById('imageInput').click();
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Form submitted:', formData);
+    // Handle form submission logic here
+  };
+
+  const handleCancel = () => {
+    // Handle cancel logic here
+    console.log('Form cancelled');
+  };
+
+  return (
+    <div className="bg-gray-50 text-gray-800 min-h-screen font-sans"
+         style={{ fontFamily: 'Manrope, sans-serif' }}>
+      <div className="flex flex-col min-h-screen">
+        {/* Header */}
+        <header className="border-b border-purple-700/20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between">
+              <div className="flex items-center gap-4">
+                <a className="flex items-center gap-2 text-gray-900" href="#">
+                  <svg className="h-6 w-6 text-purple-700" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z" fill="currentColor"></path>
+                  </svg>
+                  <span className="text-lg font-bold">CodeCollab</span>
+                </a>
+              </div>
+              <nav className="hidden md:flex items-center gap-8">
+                <a className="text-sm font-medium text-gray-700 hover:text-purple-700 transition-colors" href="#">Dashboard</a>
+                <a className="text-sm font-medium text-gray-700 hover:text-purple-700 transition-colors" href="#">Projects</a>
+                <a className="text-sm font-medium text-gray-700 hover:text-purple-700 transition-colors" href="#">Team</a>
+                <a className="text-sm font-medium text-gray-700 hover:text-purple-700 transition-colors" href="#">Settings</a>
+              </nav>
+              <div className="flex items-center gap-4">
+                <div 
+                  className="w-10 h-10 rounded-full bg-cover bg-center" 
+                  style={{
+                    backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuC9qFzFB_z3PgGGhrzsF8FBUVlPiIEuZF87h-rdoGzxLcr1KDEfttcluYlsg2CLqyq7nj8vdoWkpEn9aaaIPOz0n1RLgDGKta__h9VelVNuaPBztn7SWHuxfED371KmAr6wSu2HJ35GMOfEeu_teGLMhgLmHA9lRNyY3sBk_NVoiG-nUl_iJdUcDhpS6gxAhbyLHbyfwpEmLxZab2UgwnjJkWh8b4OCQC9nGpc_v6CUb-f74ooK_kwYIZrHfeP19uYcsIV2L1IFA2s")'
+                  }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-grow">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Profile</h1>
+              
+              {/* Profile Picture Section */}
+              <div className="flex flex-col items-center mb-8">
+                <div className="relative mb-4">
+                  <div 
+                    className="w-32 h-32 rounded-full bg-cover bg-center ring-4 ring-purple-700/20" 
+                    style={{
+                      backgroundImage: `url("${profileImage}")`
+                    }}
+                  ></div>
+                  <input
+                    type="file"
+                    id="imageInput"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <button 
+                    className="absolute bottom-0 right-0 bg-purple-700 text-white rounded-full p-2 hover:bg-purple-700/80 transition-colors"
+                    onClick={triggerImageUpload}
+                    type="button"
+                  >
+                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                    </svg>
+                  </button>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">{formData.name}</h2>
+                <p className="text-base text-purple-700">{formData.jobTitle}</p>
+              </div>
+
+              {/* Form */}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="name">
+                      Name
+                    </label>
+                    <input
+                      className="w-full rounded-lg border border-purple-700/20 bg-gray-50 focus:ring-purple-700 focus:border-purple-700 text-gray-900 px-3 py-2 focus:outline-none focus:ring-2"
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
+                      Email
+                    </label>
+                    <input
+                      className="w-full rounded-lg border border-purple-700/20 bg-gray-50 focus:ring-purple-700 focus:border-purple-700 text-gray-900 px-3 py-2 focus:outline-none focus:ring-2"
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="jobTitle">
+                    Job Title
+                  </label>
+                  <input
+                    className="w-full rounded-lg border border-purple-700/20 bg-gray-50 focus:ring-purple-700 focus:border-purple-700 text-gray-900 px-3 py-2 focus:outline-none focus:ring-2"
+                    id="jobTitle"
+                    name="jobTitle"
+                    type="text"
+                    value={formData.jobTitle}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="company">
+                    Company
+                  </label>
+                  <input
+                    className="w-full rounded-lg border border-purple-700/20 bg-gray-50 focus:ring-purple-700 focus:border-purple-700 text-gray-900 px-3 py-2 focus:outline-none focus:ring-2"
+                    id="company"
+                    name="company"
+                    type="text"
+                    value={formData.company}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="location">
+                    Location
+                  </label>
+                  <input
+                    className="w-full rounded-lg border border-purple-700/20 bg-gray-50 focus:ring-purple-700 focus:border-purple-700 text-gray-900 px-3 py-2 focus:outline-none focus:ring-2"
+                    id="location"
+                    name="location"
+                    type="text"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="bio">
+                    Bio
+                  </label>
+                  <textarea
+                    className="w-full rounded-lg border border-purple-700/20 bg-gray-50 focus:ring-purple-700 focus:border-purple-700 text-gray-900 px-3 py-2 focus:outline-none focus:ring-2 resize-none"
+                    id="bio"
+                    name="bio"
+                    rows="4"
+                    value={formData.bio}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-4 pt-4">
+                  <button
+                    className="px-6 py-2 rounded-lg text-sm font-bold bg-gray-50 text-gray-800 hover:bg-purple-700/10 transition-colors border border-gray-200"
+                    type="button"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-6 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-purple-700 to-purple-500 text-white hover:opacity-90 transition-opacity shadow-md"
+                    type="button"
+                    onClick={handleSubmit}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default ProfileEdit;
