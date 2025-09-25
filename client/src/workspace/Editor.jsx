@@ -4,16 +4,24 @@ import CodeEditor from './CodeEditor';
 import ChatBox from '../components/ChatBox';
 import LeaveRoomModal from '../components/LeaveRoomModal';
 import axios from 'axios';
+import {io} from 'socket.io-client'
+
 
 const WorkspaceEditor = () => {
   const navigate = useNavigate();
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [roomName, setRoomName] = useState('Loading...');
 
-  // Fetch room details when component mounts
+  
+  const [socket, setSocket] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [connectionStatus, setConnectionStatus] = useState('Disconnected');
+
+ 
+  const roomId = localStorage.getItem('currentRoomId');
+
   useEffect(() => {
     const fetchRoomDetails = async () => {
-      const roomId = localStorage.getItem('currentRoomId');
       const token = localStorage.getItem('authToken');
       
       if (!roomId || !token) {
@@ -28,7 +36,7 @@ const WorkspaceEditor = () => {
           },
           withCredentials: true
         });
-        
+        console.log(`room data is ${res.data}`);
         setRoomName(res.data.room.name || 'Unnamed Room');
       } catch (err) {
         console.error('Error fetching room details:', err);
@@ -39,8 +47,48 @@ const WorkspaceEditor = () => {
     fetchRoomDetails();
   }, []);
 
-  const handleLeaveRoom = async() => {
+
+  useEffect(()=>{
     const roomId = localStorage.getItem('currentRoomId');
+    if(!roomId) return ;
+   const token=localStorage.getItem('authToken');
+   const socketConnection=io("http://localhost:5000",{
+    auth:{token}
+   })
+  socketConnection.on('connect',()=>{
+    console.log("socket connected successfully", socketConnection.id);
+    setConnectionStatus('Connected');
+
+    socketConnection.emit('join-room',roomId);
+  })
+
+  socketConnection.on('Connection-err',(error)=>{
+    console.log("Connection error:",error);
+    setConnectionStatus('Error');
+  })
+  socketConnection.on('disconnect',()=>{
+    console.log("Socket disconnected");
+    setConnectionStatus('Disconnected');
+  })
+
+ 
+  socketConnection.on('user-joined-room',(data)=>{
+      console.log('📢 Received user-joined-room notification:', data);
+      setNotifications(prev => [...prev, {
+        message: data.message,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+  });
+  setSocket(socketConnection);
+  
+  return ()=>{
+    console.log('🧹 Cleaning up socket connection...');
+    socketConnection.disconnect();
+  };
+
+  },[roomId])
+
+  const handleLeaveRoom = async() => {
     const token = localStorage.getItem('authToken');
     
     console.log('Attempting to leave room:', roomId);
@@ -67,7 +115,11 @@ const WorkspaceEditor = () => {
       console.log('Leave room response:', res.data);
       
       if (res.status === 200) {
-        // Clear the current room from localStorage since user left
+        // Disconnect socket
+        if(socket){
+          socket.disconnect();
+        }
+
         localStorage.removeItem('currentRoomId');
         alert('Successfully left the room!');
         navigate('/room');
@@ -88,9 +140,6 @@ const WorkspaceEditor = () => {
     }
   };
 
-  // *** ADDED: read current room id from localStorage and pass down to CodeEditor ***
-  const roomId = localStorage.getItem('currentRoomId');
-
   return (
     <div className="relative min-h-screen w-full flex flex-col">
       <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 px-10 py-4 bg-white z-10 flex-shrink-0 sticky top-0">
@@ -103,11 +152,20 @@ const WorkspaceEditor = () => {
           <h1 className="text-xl font-bold">Code Collab</h1>
         </div>
         
-        {/* Room Name in Center */}
+  
         <div className="flex-1 flex justify-center">
-          <div className="bg-gray-100 rounded-lg px-4 py-2">
-            <span className="text-sm font-medium text-gray-700">Room: </span>
-            <span className="text-sm font-bold text-[var(--primary-color)]">{roomName}</span>
+          <div className="bg-gray-100 rounded-lg px-4 py-2 flex items-center gap-3">
+            <div>
+              <span className="text-sm font-medium text-gray-700">Room: </span>
+              <span className="text-sm font-bold text-[var(--primary-color)]">{roomName}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className={`w-2 h-2 rounded-full ${
+                connectionStatus === 'Connected' ? 'bg-green-400' : 
+                connectionStatus === 'Error' ? 'bg-red-400' : 'bg-yellow-400'
+              }`}></div>
+              <span className="text-xs text-gray-600">{connectionStatus}</span>
+            </div>
           </div>
         </div>
         
@@ -119,14 +177,33 @@ const WorkspaceEditor = () => {
         </button>
       </header>
 
-      <main className="flex flex-1 h-[calc(100vh-80px)]">
+     <main className="flex flex-1 h-[calc(100vh-80px)]">
         <div className="flex-1 max-w-[calc(100%-400px)] overflow-y-auto">
           <CodeEditor roomid={roomId} />
         </div>
-        <div className="w-[400px] flex-shrink-0 h-full overflow-y-auto">
-          <ChatBox />
+
+        {/* Updated ChatBox container with notifications */}
+        <div className="w-[400px] flex-shrink-0 h-full overflow-y-auto flex flex-col">
+          {/* Activity notifications */}
+          {notifications.length > 0 && (
+            <div className="bg-blue-50 border-b p-3">
+              <h4 className="text-xs font-semibold text-blue-800 mb-2">Recent Activity</h4>
+              <div className="space-y-1 max-h-20 overflow-y-auto">
+                {notifications.slice(-3).map((notification, index) => (
+                  <div key={index} className="text-xs text-blue-700">
+                    {notification.message} <span className="text-blue-500">({notification.timestamp})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+              {/* Chat Box */}
+          <div className="flex-1">
+            <ChatBox />
+          </div>
         </div>
       </main>
+          
 
       <LeaveRoomModal 
         isOpen={isLeaveModalOpen}

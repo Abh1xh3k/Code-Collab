@@ -252,27 +252,25 @@ const ChatBox = () => {
     const senderId = msg.sender?._id || msg.sender?.id;
     const senderUsername = msg.sender?.username;
     
-    // Method 1: ID comparison (most reliable)
+
     let isCurrentUser = false;
     if (senderId && userId) {
       isCurrentUser = String(senderId) === String(userId);
       console.log('Method 1 (ID):', { senderId, userId, match: isCurrentUser });
     }
     
-    // Method 2: Username comparison (fallback)
+
     if (!isCurrentUser && senderUsername && currentUsername && currentUsername !== "You") {
       isCurrentUser = senderUsername === currentUsername;
       console.log('Method 2 (Username):', { senderUsername, currentUsername, match: isCurrentUser });
     }
 
-    // Method 3: Force right alignment for testing - REMOVE THIS AFTER TESTING
-    // Uncomment the line below to force every other message to the right for testing
-    // isCurrentUser = parseInt(msg._id.slice(-1)) % 2 === 0;
+
 
     console.log('FINAL DECISION:', { isCurrentUser, text: msg.text });
 
     if (isCurrentUser) {
-      // YOUR MESSAGE - RIGHT SIDE (like WhatsApp sender)
+ 
       return (
         <div key={msg._id} className="flex justify-end mb-4">
           <div className="flex items-end space-x-2 max-w-xs lg:max-w-md">
@@ -294,7 +292,7 @@ const ChatBox = () => {
         </div>
       );
     } else {
-      // OTHER'S MESSAGE - LEFT SIDE (like WhatsApp receiver)
+ 
       return (
         <div key={msg._id} className="flex justify-start mb-4">
           <div className="flex items-end space-x-2 max-w-xs lg:max-w-md">
@@ -320,7 +318,6 @@ const ChatBox = () => {
     }
   };
 
-  // placeholder when no room selected
   if (!roomId) {
     return (
       <aside className="w-full min-h-full border-l border-solid border-gray-200 flex flex-col">
@@ -336,7 +333,7 @@ const ChatBox = () => {
       <ScrollbarStyles />
 
       <div className="flex flex-col flex-1">
-        {/* Video Call Header */}
+   
         <div className="flex items-center justify-center h-40 border-b border-gray-200 bg-gray-100/50 flex-shrink-0">
           <div className="text-center text-gray-500">
             <span className="material-symbols-outlined text-3xl">videocam</span>
