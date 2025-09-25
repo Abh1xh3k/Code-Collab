@@ -1,20 +1,76 @@
-import { io } from "socket.io-client";
+import { Server } from "socket.io";
+import jwt from 'jsonwebtoken';
+import User from "./models/User.js";
 
-const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZDEwYWU5NGJjZWRjYjdiMjE1YzkzMiIsImlhdCI6MTc1ODYwNjExOSwiZXhwIjoxNzU4NjkyNTE5fQ.mD-TiwlgDugeaTlZk-2Oev0yW6gv_uo3OnJcePpT8JY"; // use a real token from your auth system
+export function setupSocket(server) {
+    const io = new Server(server, {
+        cors: {
+            origin: "http://localhost:5173",
+            methods: ["GET", "POST"],
+            credentials: true,
+        }
+    });
 
-const socket = io("http://localhost:5000", {
-  auth: { token },
-  transports: ["websocket"]
-});
+    console.log(' Socket.IO server initialized');
 
-socket.on("connect", () => {
-  console.log("Connected to server. Socket ID:", socket.id);
-});
+    // Simple auth middleware
+    io.use(async (socket, next) => {
+        console.log('Socket authentication attempt...');
+        try {
+            const token = socket.handshake.auth.token;
+            console.log('Token received:', token ? 'Yes' : 'No');
+            
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await User.findById(decoded.id).select('-password');
+            
+            socket.userId = user._id.toString();
+            socket.username = user.username;
+            
+            console.log(` Socket authenticated for user: ${socket.username} (ID: ${socket.userId})`);
+            next();
+        } catch (error) {
+            console.log(' Socket authentication failed:', error.message);
+            next(new Error('Authentication failed'));
+        }
+    });
 
-socket.on("connect_error", (err) => {
-  console.log("Connection error:", err.message);
-});
+    io.on('connection', (socket) => {
+        console.log(` ${socket.username} connected to socket (Socket ID: ${socket.id})`);
 
-socket.on("disconnect", () => {
-  console.log("Disconnected from server");
-});
+     
+        socket.on('join-room', (roomId) => {
+            console.log(`📍 ${socket.username} attempting to join room: ${roomId}`);
+            
+            socket.join(roomId);
+            console.log(`✅ ${socket.username} successfully joined room: ${roomId}`);
+            
+          
+            socket.to(roomId).emit('user-joined-room', {
+                userId: socket.userId,
+                username: socket.username,
+                message: `${socket.username} joined the room`
+            });
+            
+            console.log(`📢 Broadcasted join notification to other users in room ${roomId}`);
+        });
+
+        socket.on('disconnect', () => {
+            console.log(`🔌 ${socket.username} disconnected from socket (Socket ID: ${socket.id})`);
+            
+          
+            if (socket.currentRoomId) {
+                console.log(`📤 ${socket.username} was in room ${socket.currentRoomId}, notifying others of disconnect`);
+                
+                socket.to(socket.currentRoomId).emit('user-left-room', {
+                    userId: socket.userId,
+                    username: socket.username,
+                    message: `${socket.username} disconnected`
+                });
+                
+                console.log(`📢 Broadcasted disconnect notification to other users in room ${socket.currentRoomId}`);
+            }
+        });
+    });
+
+    return io;
+}

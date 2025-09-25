@@ -23,11 +23,13 @@ Code-Collab is a real-time collaborative integrated development environment (IDE
 - Real-time code synchronization
 - Syntax highlighting and autocompletion
 
-### Real-time Chat
-- In-room messaging system
-- Real-time message updates
+### Real-time Features
+- Socket.IO integration for real-time communication
+- Live user join/leave notifications
+- Real-time participant management
+- Toast notifications for room activity
+- In-room messaging system (in development)
 - User presence indicators
-- Message history
 
 ## Technical Stack
 
@@ -43,7 +45,8 @@ Code-Collab is a real-time collaborative integrated development environment (IDE
 - MongoDB for database
 - Mongoose for ODM
 - JWT for authentication
-- Socket.IO for real-time features
+- Socket.IO for real-time communication
+- HTTP server integration with Socket.IO
 
 ## Project Structure
 
@@ -56,7 +59,12 @@ client/
 │   ├── room/
 │   │   └── Room.jsx
 │   ├── workspace/
-│   │   └── Editor.jsx
+│   │   ├── Editor.jsx
+│   │   ├── CodeEditor.jsx
+│   │   └── LanguageSelector.jsx
+│   ├── components/
+│   │   ├── ChatBox.jsx
+│   │   └── Profile.jsx
 │   └── App.jsx
 server/
 ├── controllers/
@@ -70,10 +78,12 @@ server/
 │   └── Session.js
 ├── middleware/
 │   └── authMiddleware.js
-└── routes/
-    ├── authRoutes.js
-    ├── roomRoutes.js
-    └── messageRoutes.js
+├── routes/
+│   ├── authRoutes.js
+│   ├── roomRoutes.js
+│   └── messageRoutes.js
+├── socket.js (Socket.IO configuration)
+└── server.js
 ```
 
 ## API Documentation
@@ -289,6 +299,63 @@ All endpoints may return the following error responses:
 - **404 Not Found:** When requested resource doesn't exist
 - **500 Server Error:** When an unexpected error occurs on the server
 
+## Socket.IO Real-time Events
+
+### Client → Server Events
+
+#### Join Room
+```javascript
+socket.emit('join-room', roomId)
+```
+**Description:** Joins a room and notifies other participants
+**Parameters:**
+- `roomId`: String - The room identifier
+
+### Server → Client Events
+
+#### User Joined Room
+```javascript
+socket.on('user-joined-room', (data) => {
+  // Handle user join notification
+})
+```
+**Event Data:**
+```json
+{
+  "userId": "string",
+  "username": "string", 
+  "message": "string"
+}
+```
+
+#### Connection Events
+```javascript
+// Connection successful
+socket.on('connect', () => {
+  console.log('Connected to server');
+});
+
+// Connection error
+socket.on('connect_error', (error) => {
+  console.log('Connection failed:', error.message);
+});
+
+// Disconnected
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+});
+```
+
+### Authentication
+Socket connections require JWT authentication:
+```javascript
+const socket = io('http://localhost:3000', {
+  auth: { 
+    token: 'jwt_token_here' 
+  }
+});
+```
+
 ## Models
 
 ### User
@@ -326,11 +393,16 @@ All endpoints may return the following error responses:
 
 ## Current Status
 - ✅ User authentication system
-- ✅ Basic room creation and management
-- ✅ Chat functionality
-- ✅ Code editor integration
+- ✅ Basic room creation and management  
+- ✅ Socket.IO server integration
+- ✅ Real-time room join notifications
+- ✅ JWT-based socket authentication
+- ✅ Toast notifications for user activity
+- ✅ Code editor integration (Monaco Editor)
+- ✅ Chat functionality (HTTP-based)
+- 🔄 Real-time chat messaging (in progress)
 - 🔄 Real-time code synchronization (in progress)
-- 🔄 User presence system (in progress)
+- 🔄 WebRTC video calling (planned)
 
 ## Future Enhancements
 1. Code execution environment
@@ -362,21 +434,56 @@ npm install
 ```env
 MONGODB_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
+PORT=3000
 ```
 
-4. Run the application
+4. Install additional client dependencies
 ```bash
-# Frontend
+cd client
+npm install socket.io-client
+```
+
+5. Run the application
+```bash
+# Frontend (runs on http://localhost:5173)
+cd client
 npm run dev
 
-# Backend
+# Backend (runs on http://localhost:3000)
+cd server
 npm start
 ```
 
+## Real-time Communication Flow
+
+### Socket.IO Workflow
+1. **Authentication**: User logs in via HTTP → Receives JWT token
+2. **Room Entry**: User navigates to workspace → Socket connects with JWT
+3. **Room Joining**: Socket emits `join-room` event with room ID
+4. **Notifications**: Other users in room receive `user-joined-room` event
+5. **UI Updates**: Toast notifications show user activity in real-time
+
+### Example Flow
+```
+User A joins room → Socket connection → No notification (first user)
+User B joins same room → Socket connection → User A sees "User B joined" toast
+User C joins same room → Socket connection → Both A & B see "User C joined" toast
+```
+
+### Console Logging
+The application includes comprehensive console logging for debugging:
+- 🏠 Component lifecycle events
+- 🔐 Authentication attempts  
+- ✅ Successful connections
+- 📍 Room joining events
+- 📢 Broadcast notifications
+- 🔌 Disconnection events
+
 ## Security Features
-- JWT token authentication
-- Password hashing
+- JWT token authentication for HTTP and Socket.IO
+- Password hashing with bcryptjs
 - Protected API routes
+- Socket authentication middleware
 - Role-based access control
 - Secure room joining mechanism
 
