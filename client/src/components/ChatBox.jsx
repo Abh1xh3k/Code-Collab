@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { io } from 'socket.io-client'
 
 const ChatBox = () => {
   const [message, setMessage] = useState("");
@@ -7,6 +8,7 @@ const ChatBox = () => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [socket, setSocket] = useState(null);
 
   const token = localStorage.getItem("authToken") || "";
   const roomId = localStorage.getItem("currentRoomId") || null;
@@ -43,6 +45,33 @@ const ChatBox = () => {
       .auto-grow { min-height: 40px; max-height: 160px; overflow-y: auto; }
     `}</style>
   );
+  useEffect(() => {
+    if (!roomId || !token) return;
+    console.log(`Socket connecting to room: ${roomId}`);
+    
+    const socketInstance = io("http://localhost:5000", {
+      auth: { token }
+    });
+
+    socketInstance.on('connect', () => {
+      socketInstance.emit('join-room', roomId);
+      console.log(`Joined room: ${roomId}`);
+    });
+
+    socketInstance.on('new-message', (messageData) => {
+      const normalizedMessage = normalizeMessage(messageData);
+      if (normalizedMessage) {
+        setMessages(prev => [...prev, normalizedMessage]);
+      }
+    });
+
+    setSocket(socketInstance);
+
+    return () => {
+      socketInstance.disconnect();
+    }
+
+  }, [roomId]);
 
   const normalizeMessage = (raw) => {
     if (!raw) return null;
@@ -168,67 +197,27 @@ const ChatBox = () => {
 
 
   const handleSendMessage = async () => {
-    if (!roomId) {
-      setError("No room selected.");
-      return;
-    }
+    if (!roomId || !socket) return;
     const trimmed = message.trim();
     if (!trimmed) return;
-
+    
+    console.log(`📤 Sending message`);
     setSending(true);
     setError("");
+    
     try {
-      const res = await axios.post(
-        `http://localhost:5000/api/chat/sendMessage`,
-        { roomId, text: trimmed },
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
-      );
-
-
-      let rawMsg = null;
-      if (res.data && res.data.data) rawMsg = res.data.data;
-      else if (res.data && (res.data._id || res.data.text || res.data.userId)) rawMsg = res.data;
-      else if (Array.isArray(res.data)) rawMsg = res.data[res.data.length - 1];
-      else {
-
-        rawMsg = { _id: `local-${Date.now()}`, text: trimmed, userId: userId || "unknown", createdAt: new Date().toISOString() };
-      }
-
-      const normalized = normalizeMessage(rawMsg);
-      setMessages((prev) => [...prev, normalized]);
+      socket.emit('send-message', {
+        roomId,
+        text: trimmed
+      });
+      
       setMessage("");
-
-
-      try {
-        const refresh = await axios.get(`http://localhost:5000/api/chat/getMessage/${roomId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        let rawList = [];
-        if (Array.isArray(refresh.data)) rawList = refresh.data;
-        else if (Array.isArray(refresh.data.messages)) rawList = refresh.data.messages;
-        else if (Array.isArray(refresh.data.data)) rawList = refresh.data.data;
-        else {
-          const arr = Object.values(refresh.data || {}).find((v) => Array.isArray(v));
-          if (arr) rawList = arr;
-        }
-        const normalizedAll = rawList
-          .map(normalizeMessage)
-          .filter(Boolean)
-          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        setMessages(normalizedAll);
-      } catch (refreshErr) {
-
-        console.warn("Refresh after send failed:", refreshErr);
-      }
-    } catch (err) {
-      console.error("Send message error:", err);
-      setError("Failed to send message.");
+    } catch(err) {
+      setError("Failed to send message");
     } finally {
       setSending(false);
     }
   };
-
-
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -251,14 +240,14 @@ const ChatBox = () => {
     // Try multiple methods to determine if this is current user's message
     const senderId = msg.sender?._id || msg.sender?.id;
     const senderUsername = msg.sender?.username;
-    
+
 
     let isCurrentUser = false;
     if (senderId && userId) {
       isCurrentUser = String(senderId) === String(userId);
       console.log('Method 1 (ID):', { senderId, userId, match: isCurrentUser });
     }
-    
+
 
     if (!isCurrentUser && senderUsername && currentUsername && currentUsername !== "You") {
       isCurrentUser = senderUsername === currentUsername;
@@ -270,7 +259,7 @@ const ChatBox = () => {
     console.log('FINAL DECISION:', { isCurrentUser, text: msg.text });
 
     if (isCurrentUser) {
- 
+
       return (
         <div key={msg._id} className="flex justify-end mb-4">
           <div className="flex items-end space-x-2 max-w-xs lg:max-w-md">
@@ -292,7 +281,7 @@ const ChatBox = () => {
         </div>
       );
     } else {
- 
+
       return (
         <div key={msg._id} className="flex justify-start mb-4">
           <div className="flex items-end space-x-2 max-w-xs lg:max-w-md">
@@ -333,7 +322,7 @@ const ChatBox = () => {
       <ScrollbarStyles />
 
       <div className="flex flex-col flex-1">
-   
+
         <div className="flex items-center justify-center h-40 border-b border-gray-200 bg-gray-100/50 flex-shrink-0">
           <div className="text-center text-gray-500">
             <span className="material-symbols-outlined text-3xl">videocam</span>
@@ -348,15 +337,15 @@ const ChatBox = () => {
         <div
           ref={containerRef}
           className="chat-scroll flex-1 overflow-y-auto overflow-x-hidden p-4"
-          style={{ 
+          style={{
             background: "linear-gradient(180deg,#f8fafc 0%, #ffffff 100%)",
-            maxHeight: "calc(100vh - 320px)", 
-            minHeight: "300px" 
+            maxHeight: "calc(100vh - 320px)",
+            minHeight: "300px"
           }}
         >
           {loading && <p className="text-sm text-gray-400">Loading messages...</p>}
           {!loading && messages.length === 0 && <p className="text-sm text-gray-400">No messages yet. Say hello 👋</p>}
-          {messages.map((m) => renderMessage(m))}
+          {Array.isArray(messages) && messages.map((m) => renderMessage(m))}
         </div>
       </div>
 

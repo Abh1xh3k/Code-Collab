@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import jwt from 'jsonwebtoken';
 import User from "./models/User.js";
+import Message from'./models/Message.js';
 
 export function setupSocket(server) {
     const io = new Server(server, {
@@ -39,10 +40,10 @@ export function setupSocket(server) {
 
      
         socket.on('join-room', (roomId) => {
-            console.log(`📍 ${socket.username} attempting to join room: ${roomId}`);
+            console.log(`${socket.username} attempting to join room: ${roomId}`);
             
             socket.join(roomId);
-            console.log(`✅ ${socket.username} successfully joined room: ${roomId}`);
+            console.log(`${socket.username} successfully joined room: ${roomId}`);
             
           
             socket.to(roomId).emit('user-joined-room', {
@@ -51,15 +52,15 @@ export function setupSocket(server) {
                 message: `${socket.username} joined the room`
             });
             
-            console.log(`📢 Broadcasted join notification to other users in room ${roomId}`);
+            console.log(`Broadcasted join notification to other users in room ${roomId}`);
         });
 
         socket.on('disconnect', () => {
-            console.log(`🔌 ${socket.username} disconnected from socket (Socket ID: ${socket.id})`);
+            console.log(`${socket.username} disconnected from socket (Socket ID: ${socket.id})`);
             
           
             if (socket.currentRoomId) {
-                console.log(`📤 ${socket.username} was in room ${socket.currentRoomId}, notifying others of disconnect`);
+                console.log(`${socket.username} was in room ${socket.currentRoomId}, notifying others of disconnect`);
                 
                 socket.to(socket.currentRoomId).emit('user-left-room', {
                     userId: socket.userId,
@@ -67,7 +68,33 @@ export function setupSocket(server) {
                     message: `${socket.username} disconnected`
                 });
                 
-                console.log(`📢 Broadcasted disconnect notification to other users in room ${socket.currentRoomId}`);
+                console.log(`Broadcasted disconnect notification to other users in room ${socket.currentRoomId}`);
+            }
+        });
+
+        socket.on('send-message' ,async(data)=>{
+            console.log(`📨 Message from ${socket.username} to room: ${data.roomId}`);
+            try{
+                const{roomId,text}=data;
+                const message=await Message.create({
+                    roomId,
+                    userId:socket.userId,
+                    text
+                });
+
+                const messageData={
+                    _id:message._id,
+                    text:message.text,
+                    sender:{
+                        _id:socket.userId,
+                        username:socket.username,
+                    },
+                    createdAt:message.createdAt
+                };
+
+                io.to(roomId).emit('new-message',messageData);
+            }catch(err){
+                socket.emit('message-error',{error:'Failed to send message'})
             }
         });
     });
