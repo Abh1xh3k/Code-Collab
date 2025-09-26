@@ -69,11 +69,12 @@ const WorkspaceEditor = () => {
   socketConnection.on('disconnect',()=>{
     console.log("Socket disconnected");
     setConnectionStatus('Disconnected');
+    socketConnection.emit('leave-room',roomId)
   })
 
  
   socketConnection.on('user-joined-room',(data)=>{
-      console.log('📢 Received user-joined-room notification:', data);
+      console.log(' Received user-joined-room notification:', data);
       setNotifications(prev => [...prev, {
         message: data.message,
         timestamp: new Date().toLocaleTimeString()
@@ -82,7 +83,7 @@ const WorkspaceEditor = () => {
   setSocket(socketConnection);
   
   return ()=>{
-    console.log('🧹 Cleaning up socket connection...');
+    console.log(' Cleaning up socket connection...');
     socketConnection.disconnect();
   };
 

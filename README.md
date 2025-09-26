@@ -24,12 +24,20 @@ Code-Collab is a real-time collaborative integrated development environment (IDE
 - Syntax highlighting and autocompletion
 
 ### Real-time Features
-- Socket.IO integration for real-time communication
-- Live user join/leave notifications
-- Real-time participant management
-- Toast notifications for room activity
-- In-room messaging system (in development)
-- User presence indicators
+- **Socket.IO Real-time Communication**
+  - JWT-based socket authentication
+  - Room-based message broadcasting
+  - Live user join/leave notifications
+  - Real-time participant management
+- **Real-time Chat System**
+  - Instant messaging within rooms
+  - Message persistence to MongoDB
+  - Real-time message delivery to all room members
+  - Message normalization and display
+- **User Activity**
+  - Live connection status indicators
+  - Room join/leave notifications
+  - Clean console logging for debugging
 
 ## Technical Stack
 
@@ -289,6 +297,72 @@ Authorization: Bearer <token>
 }
 ```
 
+## Socket.IO Real-time Communication
+
+### Connection & Authentication
+```javascript
+// Client connection with JWT authentication
+const socket = io('http://localhost:5000', {
+  auth: { token: localStorage.getItem('authToken') }
+});
+```
+
+### Socket Events
+
+#### Client → Server Events
+
+**Join Room**
+```javascript
+socket.emit('join-room', roomId);
+```
+
+**Send Message**
+```javascript
+socket.emit('send-message', {
+  roomId: 'string',
+  text: 'string'
+});
+```
+
+#### Server → Client Events
+
+**User Joined Room**
+```javascript
+socket.on('user-joined-room', (data) => {
+  // data: { userId, username, message, timestamp }
+});
+```
+
+**New Message**
+```javascript
+socket.on('new-message', (messageData) => {
+  // messageData: { _id, text, sender: { _id, username }, createdAt }
+});
+```
+
+**User Left Room**
+```javascript
+socket.on('user-left-room', (data) => {
+  // data: { userId, username, message }
+});
+```
+
+### Socket Architecture
+- **Authentication**: JWT token verification on socket connection
+- **Room Management**: Users join specific room channels for targeted messaging
+- **Message Broadcasting**: Real-time message delivery to all room members
+- **Database Integration**: Messages saved to MongoDB before broadcasting
+- **Error Handling**: Socket error events for connection issues
+
+### Current Implementation Status
+- ✅ Socket.IO server setup with HTTP integration
+- ✅ JWT authentication middleware for socket connections
+- ✅ Room joining and user notifications
+- ✅ Real-time chat messaging with MongoDB persistence
+- ✅ Message normalization and display
+- 🔄 WebRTC video calling (planned)
+- 🔄 Code editor synchronization (planned)
+
 ### Error Responses
 
 All endpoints may return the following error responses:
@@ -392,17 +466,29 @@ const socket = io('http://localhost:3000', {
 ```
 
 ## Current Status
-- ✅ User authentication system
-- ✅ Basic room creation and management  
-- ✅ Socket.IO server integration
-- ✅ Real-time room join notifications
-- ✅ JWT-based socket authentication
-- ✅ Toast notifications for user activity
-- ✅ Code editor integration (Monaco Editor)
-- ✅ Chat functionality (HTTP-based)
-- 🔄 Real-time chat messaging (in progress)
-- 🔄 Real-time code synchronization (in progress)
-- 🔄 WebRTC video calling (planned)
+- ✅ **User Authentication System**
+  - JWT-based authentication with secure login/signup
+  - Protected routes and middleware
+- ✅ **Room Management**
+  - Create/join rooms with unique codes
+  - Real-time participant management
+- ✅ **Socket.IO Real-time Communication**
+  - Server setup with HTTP integration
+  - JWT authentication for socket connections
+  - Room-based message broadcasting
+- ✅ **Real-time Chat System**
+  - Instant messaging within rooms
+  - Message persistence to MongoDB
+  - Real-time message delivery to all room members
+- ✅ **Code Editor Integration**
+  - Monaco Editor (VS Code engine)
+  - Multiple language support
+  - Syntax highlighting
+- ✅ **User Activity Notifications**
+  - Live join/leave notifications
+  - Connection status indicators
+- 🔄 **Real-time Code Synchronization** (planned)
+- 🔄 **WebRTC Video Calling** (planned)
 
 ## Future Enhancements
 1. Code execution environment
