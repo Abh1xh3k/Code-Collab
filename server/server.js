@@ -22,7 +22,11 @@ app.use(express.urlencoded({extended:false}));
 
 const port = process.env.PORT || 3000;
 const corsOption = {
-    origin: 'http://localhost:5173',
+    origin: [
+        'http://localhost:5173',
+        'http://192.168.1.100:5173', // Replace with your computer's IP
+        // Add more IPs if needed for different devices
+    ],
     credentials: true,
 }
 app.use(cors(corsOption));
