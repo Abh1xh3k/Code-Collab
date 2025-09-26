@@ -34,6 +34,13 @@ Code-Collab is a real-time collaborative integrated development environment (IDE
   - Message persistence to MongoDB
   - Real-time message delivery to all room members
   - Message normalization and display
+- **WebRTC Video Calling**
+  - Automatic video calls on room join
+  - Peer-to-peer video streaming
+  - Multiple user support in single room
+  - Video controls (camera on/off, mute/unmute)
+  - Picture-in-picture display for remote users
+  - Connection status indicators
 - **User Activity**
   - Live connection status indicators
   - Room join/leave notifications
@@ -47,6 +54,8 @@ Code-Collab is a real-time collaborative integrated development environment (IDE
 - React Router for navigation
 - Axios for API calls
 - Monaco Editor for code editing
+- Socket.IO Client for real-time communication
+- WebRTC for peer-to-peer video calling
 
 ### Backend
 - Node.js with Express
@@ -55,6 +64,7 @@ Code-Collab is a real-time collaborative integrated development environment (IDE
 - JWT for authentication
 - Socket.IO for real-time communication
 - HTTP server integration with Socket.IO
+- WebRTC signaling server
 
 ## Project Structure
 
@@ -324,6 +334,28 @@ socket.emit('send-message', {
 });
 ```
 
+**WebRTC Video Calling Events**
+```javascript
+// Send video call offer
+socket.emit('video-call-offer', {
+  offer: RTCSessionDescription,
+  roomId: 'string'
+});
+
+// Send video call answer
+socket.emit('video-call-answer', {
+  answer: RTCSessionDescription,
+  roomId: 'string',
+  targetUserId: 'string'
+});
+
+// Send ICE candidate
+socket.emit('ice-candidate', {
+  candidate: RTCIceCandidate,
+  roomId: 'string'
+});
+```
+
 #### Server → Client Events
 
 **User Joined Room**
@@ -347,11 +379,41 @@ socket.on('user-left-room', (data) => {
 });
 ```
 
+**WebRTC Video Events**
+```javascript
+// New user ready for video
+socket.on('user-ready-for-video', (data) => {
+  // data: { userId, username, roomId }
+});
+
+// Received video call offer
+socket.on('video-call-offer', (data) => {
+  // data: { offer, callerId, callerName, roomId }
+});
+
+// Received video call answer
+socket.on('video-call-answer', (data) => {
+  // data: { answer, answererId, answererName, roomId, targetUserId }
+});
+
+// Received ICE candidate
+socket.on('ice-candidate', (data) => {
+  // data: { candidate, senderId, roomId }
+});
+
+// User video disconnected
+socket.on('user-video-disconnected', (data) => {
+  // data: { userId, username, roomId }
+});
+```
+
 ### Socket Architecture
 - **Authentication**: JWT token verification on socket connection
 - **Room Management**: Users join specific room channels for targeted messaging
 - **Message Broadcasting**: Real-time message delivery to all room members
 - **Database Integration**: Messages saved to MongoDB before broadcasting
+- **WebRTC Signaling**: Server acts as signaling relay for WebRTC connections
+- **Video Connection Management**: Automatic video setup and cleanup
 - **Error Handling**: Socket error events for connection issues
 
 ### Current Implementation Status
@@ -360,7 +422,15 @@ socket.on('user-left-room', (data) => {
 - ✅ Room joining and user notifications
 - ✅ Real-time chat messaging with MongoDB persistence
 - ✅ Message normalization and display
-- 🔄 WebRTC video calling (planned)
+- ✅ **WebRTC video calling with automatic room-based video**
+  - ✅ Automatic video initialization on room join
+  - ✅ Peer-to-peer video streaming
+  - ✅ Multiple user support (group video calls)
+  - ✅ WebRTC signaling through Socket.IO
+  - ✅ ICE candidate exchange for NAT traversal
+  - ✅ Video controls (camera/microphone toggle)
+  - ✅ Connection status indicators
+  - ✅ Automatic cleanup on user disconnect
 - 🔄 Code editor synchronization (planned)
 
 ### Error Responses
@@ -480,6 +550,16 @@ const socket = io('http://localhost:3000', {
   - Instant messaging within rooms
   - Message persistence to MongoDB
   - Real-time message delivery to all room members
+- ✅ **WebRTC Video Calling System**
+  - Automatic video calls on room join/leave
+  - Peer-to-peer video streaming via WebRTC
+  - Multi-user video support (group calls)
+  - Camera and microphone controls
+  - Picture-in-picture remote video display
+  - WebRTC signaling through Socket.IO
+  - ICE candidate exchange for NAT traversal
+  - Connection status indicators
+  - Automatic video cleanup on disconnect
 - ✅ **Code Editor Integration**
   - Monaco Editor (VS Code engine)
   - Multiple language support
@@ -488,15 +568,18 @@ const socket = io('http://localhost:3000', {
   - Live join/leave notifications
   - Connection status indicators
 - 🔄 **Real-time Code Synchronization** (planned)
-- 🔄 **WebRTC Video Calling** (planned)
 
 ## Future Enhancements
-1. Code execution environment
-2. Multiple file support
-3. Version control integration
-4. Voice/Video chat
-5. Code snippets library
-6. Custom themes and settings
+1. Real-time code synchronization
+2. Code execution environment
+3. Multiple file support
+4. Version control integration
+5. Screen sharing in video calls
+6. Recording video calls
+7. Code snippets library
+8. Custom themes and settings
+9. Mobile app development
+10. TURN server integration for better connectivity
 
 ## Development Setup
 
@@ -527,6 +610,7 @@ PORT=3000
 ```bash
 cd client
 npm install socket.io-client
+# WebRTC is built into modern browsers - no additional packages needed
 ```
 
 5. Run the application
@@ -549,12 +633,55 @@ npm start
 4. **Notifications**: Other users in room receive `user-joined-room` event
 5. **UI Updates**: Toast notifications show user activity in real-time
 
+### WebRTC Video Call Flow
+1. **User A** joins room → Camera initializes → No video connection (first user)
+2. **User B** joins same room → Camera initializes → Server emits `user-ready-for-video`
+3. **User A** receives notification → Creates WebRTC offer → Sends via Socket.IO
+4. **User B** receives offer → Creates WebRTC answer → Sends back via Socket.IO
+5. **Both users** exchange ICE candidates → Direct P2P connection established
+6. **Video streams** flow directly between users (bypassing server)
+7. **User leaves** → Server emits `user-video-disconnected` → Connections cleaned up
+
 ### Example Flow
 ```
-User A joins room → Socket connection → No notification (first user)
-User B joins same room → Socket connection → User A sees "User B joined" toast
-User C joins same room → Socket connection → Both A & B see "User C joined" toast
+User A joins room → Socket + Camera → Video ready (no connection yet)
+User B joins same room → Socket + Camera → WebRTC offer/answer exchange
+Both users connected → Direct video streaming (P2P)
+User C joins → Creates connections with both A & B
+User A leaves → B & C maintain their connection
 ```
+
+## WebRTC Architecture
+
+### Signaling Server (Socket.IO)
+The server acts as a **signaling relay** for WebRTC connections:
+- **Does NOT handle video data** - only setup messages
+- Forwards offers, answers, and ICE candidates between users
+- Manages room-based video connection setup
+- Handles automatic video initialization and cleanup
+
+### Client-Side WebRTC
+Each client maintains:
+- **Local Stream**: User's camera/microphone feed
+- **Peer Connections**: One RTCPeerConnection per remote user
+- **Remote Streams**: Video/audio from other users
+- **ICE Candidates**: Network routing options for connection
+
+### Video Call Features
+- **Automatic Start**: Video calls begin when joining a room
+- **Multiple Users**: Support for group video calls (N-to-N connections)
+- **Camera Controls**: Toggle camera on/off
+- **Microphone Controls**: Mute/unmute audio
+- **Picture-in-Picture**: Remote users shown in small windows
+- **Connection Status**: Real-time connection indicators
+- **Responsive UI**: Adapts to different screen sizes
+
+### Browser Compatibility
+- **Chrome**: Full WebRTC support
+- **Firefox**: Full WebRTC support  
+- **Safari**: WebRTC support (iOS 11+)
+- **Edge**: Full WebRTC support
+- **Mobile**: Supported on modern mobile browsers
 
 ### Console Logging
 The application includes comprehensive console logging for debugging:
@@ -565,6 +692,27 @@ The application includes comprehensive console logging for debugging:
 - 📢 Broadcast notifications
 - 🔌 Disconnection events
 
+## Documentation
+
+### Technical Guides
+- **`webrtc_implementation_guide.md`**: Comprehensive 88-page guide covering every aspect of the WebRTC implementation
+  - Complete function documentation
+  - Data flow diagrams
+  - Payload structures
+  - Error handling
+  - Testing scenarios
+- **`socket_workflow.md`**: Socket.IO function flow diagrams and workflow documentation
+
+### API Documentation
+All API endpoints are documented above with request/response examples.
+
+### WebRTC Documentation
+Detailed WebRTC implementation with:
+- Step-by-step connection flow
+- Client and server function explanations
+- Real-world debugging scenarios
+- Performance considerations
+
 ## Security Features
 - JWT token authentication for HTTP and Socket.IO
 - Password hashing with bcryptjs
@@ -572,6 +720,8 @@ The application includes comprehensive console logging for debugging:
 - Socket authentication middleware
 - Role-based access control
 - Secure room joining mechanism
+- WebRTC peer-to-peer encryption (built-in)
+- STUN server for NAT traversal
 
 ## Contributors
 - [Abhishek]
