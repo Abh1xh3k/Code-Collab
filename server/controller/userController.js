@@ -15,7 +15,6 @@ export const updateProfile= async(req,res)=>{
            return res.status(404).json({ message: "User not found" });
        }
 
-       // Update the profile fields directly
        user.profile = profile;
        console.log(user.profile);
        await user.save();

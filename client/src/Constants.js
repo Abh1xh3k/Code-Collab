@@ -1,10 +1,7 @@
-
 // API Configuration
-export const API_BASE_URL = 'http://localhost:5000';
-// For mobile testing, replace localhost with your computer's IP:
-// export const API_BASE_URL = 'http://192.168.1.100:5000'; // Replace with your IP
+export const API_BASE_URL = '/api' || 'http://localhost:5000';
 
-export const SOCKET_URL = API_BASE_URL;
+export const SOCKET_URL = '/';
 
 export const LANGUAGE_VERSIONS = {
   javascript: "18.15.0",

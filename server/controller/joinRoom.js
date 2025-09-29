@@ -25,12 +25,14 @@ export const joinroom= async(req,res)=>{
         (p)=>p.userId.toString()===req.user.id.toString()
     );
     if (alreadyParticipant){
-        return res.status(200).json({message:"User already a member of this room"});
+        return res.status(200).json({message:"User already a member of this room", roomId: room._id});
     }
     
     room.participants.push({userId:req.user.id, role:"member"});
     await room.save();
-    res.status(200).json({message:"Joinded Room Successfully"});
+    
+    console.log(`User ${req.user.id} joined room ${roomId} successfully`);
+    res.status(200).json({message:"Joined Room Successfully", roomId: room._id});
 }
 catch(err){
     console.log("Error Joining Room",err);

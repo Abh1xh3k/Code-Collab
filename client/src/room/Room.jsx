@@ -4,31 +4,31 @@ import RoomCreatedModal from '../components/RoomCreatedModal';
 import axios from 'axios';
 const Room = () => {
 
-  const navigate=useNavigate();
+  const navigate = useNavigate();
   const [mode, setMode] = useState('create'); // 'create' or 'join'
   const [showModal, setShowModal] = useState(false);
   const [createdRoomData, setCreatedRoomData] = useState(null);
-  
+
   const [createData, setCreateData] = useState({
     name: '',
     isPrivate: true,
     joinCode: ''
   });
-  
+
   const [joinData, setJoinData] = useState({
     roomId: '',
     joinCode: ''
   });
-  
+
   const handleCreateInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setCreateData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
+
   };
-  
+
   const handleJoinInputChange = (e) => {
     const { name, value } = e.target;
     setJoinData(prev => ({
@@ -37,50 +37,50 @@ const Room = () => {
     }));
   };
 
-  const handleCreateRoom = async(e) => {
+  const handleCreateRoom = async (e) => {
     e.preventDefault();
     // console.log('Create room data:', createData);
-    
-    try{
+
+    try {
       // Get the token from localStorage
       const token = localStorage.getItem('authToken');
-      
+
       if (!token) {
         alert('Please login first');
         return;
       }
-      
-      const res = await axios.post('http://localhost:5000/api/room/create', createData, {
+
+      const res = await axios.post("/api/room/create", createData, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        withCredentials: true
+        withCredentials: true,
       });
-      
+
       console.log('Room created:', res.data);
-      
+
       // Store the current room ID for future operations
       localStorage.setItem('currentRoomId', res.data.room);
-      
+
       // Show the modal with actual room data
       setCreatedRoomData({
         roomId: res.data.room,
         joinCode: createData.joinCode
       });
       setShowModal(true);
-      
+
       // Reset form
       setCreateData({
         name: '',
         isPrivate: true,
         joinCode: ''
       });
-      
-    } catch(err) {
+
+    } catch (err) {
       console.log('Full error:', err);
       console.log('Error response:', err.response?.data);
-      
+
       if (err.response?.status === 401) {
         alert('Session expired. Please login again.');
         // Optionally redirect to login
@@ -90,46 +90,46 @@ const Room = () => {
       }
     }
   };
-  
-  const handleJoinRoom = async(e) => {
+
+  const handleJoinRoom = async (e) => {
     e.preventDefault();
     console.log('Join room data:', joinData);
-    
-    try{
+
+    try {
       // Get the token from localStorage
       const token = localStorage.getItem('authToken');
-      
+
       if (!token) {
         alert('Please login first');
         return;
       }
-      
-      const res = await axios.post('http://localhost:5000/api/room/join', joinData, {
+
+      const res = await axios.post("/api/room/join", joinData, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        withCredentials: true
+        withCredentials: true,
       });
-      
+
       console.log('Joined room:', res.data);
-      
+
       // Store the current room ID for future operations
       localStorage.setItem('currentRoomId', joinData.roomId);
-      
+
       alert('Successfully joined room!');
       navigate('/editor');
-      
+
       // Reset form
       setJoinData({
         roomId: '',
         joinCode: ''
       });
-      
-    } catch(err) {
+
+    } catch (err) {
       console.log('Full error:', err);
       console.log('Error response:', err.response?.data);
-      
+
       if (err.response?.status === 401) {
         alert('Session expired. Please login again.');
       } else if (err.response?.status === 404) {
@@ -141,7 +141,7 @@ const Room = () => {
       }
     }
   };
-  
+
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -154,7 +154,7 @@ const Room = () => {
           </div>
           <h1 className="text-xl font-bold tracking-tighter">CodeCollab</h1>
         </div>
-        
+
         <nav className="flex items-center gap-6 text-sm font-medium text-gray-600">
 
         </nav>
@@ -164,8 +164,8 @@ const Room = () => {
             <span className="material-symbols-outlined text-gray-500 hover:text-gray-800 transition-colors">notifications</span>
             <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
           </button>
-          <div 
-            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" 
+          <div
+            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
             style={{
               backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuCJ6qfLxUn-IJAcVFSG8dRRYBZzFGeM-XgRgYC4EkaHmjJaZufe0D-6ZMNirC-x-BrAjbH6_yNcg8-rGw9nqZI0Zz1u1ah-BdXa-CjIHyUJ3n96UDJlmrSNR819r7mqPFw_Xoe9dOodfI6PgxmuBXcDKAvvvjiAWDc18LFFmFgvTDQPdZjHMd_voY88Xti7ENiPBDsymL1GpfHTdOoWwe5EmYZAF8mhlI_YQI2XrpGEfVE7Y6U3IvZ_yL8gebxZcvA7EuHcYCjZuZE")`
             }}
@@ -186,22 +186,20 @@ const Room = () => {
               <button
                 type="button"
                 onClick={() => setMode('create')}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  mode === 'create' 
-                    ? 'bg-white text-[var(--primary-color)] shadow-sm' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${mode === 'create'
+                  ? 'bg-white text-[var(--primary-color)] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
               >
                 Create Room
               </button>
               <button
                 type="button"
                 onClick={() => setMode('join')}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  mode === 'join' 
-                    ? 'bg-white text-[var(--primary-color)] shadow-sm' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${mode === 'join'
+                  ? 'bg-white text-[var(--primary-color)] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
               >
                 Join Room
               </button>
@@ -223,7 +221,7 @@ const Room = () => {
                     onChange={handleCreateInputChange}
                   />
                 </div>
-                
+
                 <div>
                   <label className="sr-only" htmlFor="joinCode">Join Code</label>
                   <input
@@ -252,7 +250,7 @@ const Room = () => {
                   </label>
                 </div>
 
-                <button 
+                <button
                   className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm btn-primary transition-all duration-200 transform hover:scale-105"
                   type="submit"
                 >
@@ -277,7 +275,7 @@ const Room = () => {
                     onChange={handleJoinInputChange}
                   />
                 </div>
-                
+
                 <div>
                   <label className="sr-only" htmlFor="joinCode">Join Code</label>
                   <input
@@ -292,7 +290,7 @@ const Room = () => {
                   />
                 </div>
 
-                <button 
+                <button
                   className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm btn-primary transition-all duration-200 transform hover:scale-105"
                   type="submit"
                 >
@@ -301,7 +299,7 @@ const Room = () => {
               </form>
             )}
           </div>
-          
+
           <p className="mt-8 text-center text-xs text-gray-400">
             By creating or joining a room, you agree to our{' '}
             <Link to="#" className="font-medium text-[var(--primary-color)] hover:underline">
@@ -313,7 +311,7 @@ const Room = () => {
       </main>
 
       {/* Room Created Modal */}
-      <RoomCreatedModal 
+      <RoomCreatedModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         roomData={createdRoomData}

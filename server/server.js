@@ -24,7 +24,8 @@ const port = process.env.PORT || 3000;
 const corsOption = {
     origin: [
         'http://localhost:5173',
-        'http://192.168.1.100:5173', // Replace with your computer's IP
+        'http://172.20.10.4:5173',
+        'http://30.10.38.51:5173', // Replace with your computer's IP
         // Add more IPs if needed for different devices
     ],
     credentials: true,
@@ -34,6 +35,7 @@ app.use(cors(corsOption));
 app.get('/', (req, res) => {
     res.send("server is running")
 })
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
