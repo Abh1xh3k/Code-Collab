@@ -3,54 +3,54 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Signup = () => {
-    const navigate = useNavigate();
-    
-    // Form state management
-    const [user, setUser] = useState({
-        username: '',
-        email: '',
-        password: ''
-    });
-    
-    const [error, setError] = useState('');
-    
-    // Handle input changes
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setUser(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-    
-    // Handle form submission
-    const handleSubmit = async(e) => {
-        e.preventDefault();
-        setError(''); // Clear previous errors
-        console.log('Sending data:', user);
-        try{
-          const res= await axios.post('http://localhost:5000/api/auth/signup',user,{
-            headers:{
-              'Content-Type':'application/json'
-            },
-            withCredentials:true
-          })
-          console.log('Success:', res.data);
-          // Handle successful signup
-          navigate('/login'); // or wherever you want to redirect
-        }catch(err){
-          console.log('Full error:', err);
-          console.log('Error response:', err.response?.data);
-          console.log('Error status:', err.response?.status);
-          
-          // Set error message for user to see
-          if (err.response?.data?.message) {
-            setError(err.response.data.message);
-          } else {
-            setError('Something went wrong. Please try again.');
-          }
-        }
-    };
+  const navigate = useNavigate();
+
+  // Form state management
+  const [user, setUser] = useState({
+    username: '',
+    email: '',
+    password: ''
+  });
+
+  const [error, setError] = useState('');
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUser(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    console.log('Sending data:', user);
+    try {
+      const res = await axios.post("/api/auth/signup", user, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      });
+      console.log('Success:', res.data);
+
+      navigate('/login');
+    } catch (err) {
+      console.log('Full error:', err);
+      console.log('Error response:', err.response?.data);
+      console.log('Error status:', err.response?.status);
+
+      // Set error message for user to see
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    }
+  };
   return (
     <div className="flex min-h-screen w-full items-center justify-center font-manrope">
       <div className="grid w-full max-w-6xl grid-cols-1 overflow-hidden rounded-2xl bg-white shadow-xl lg:grid-cols-2">
@@ -61,8 +61,8 @@ const Signup = () => {
           </div>
           <div className="mb-6 flex">
             <button
-            onClick={()=>navigate('/login')} 
-            className="flex-1 rounded-l-lg bg-gray-100 py-2.5 text-center text-sm font-semibold text-gray-600 hover:bg-gray-200">Login</button>
+              onClick={() => navigate('/login')}
+              className="flex-1 rounded-l-lg bg-gray-100 py-2.5 text-center text-sm font-semibold text-gray-600 hover:bg-gray-200">Login</button>
             <button className="flex-1 rounded-r-lg bg-[var(--primary-color)] py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-purple-700">Signup</button>
           </div>
           <button className="mb-6 flex w-full items-center justify-center gap-3 rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
@@ -87,11 +87,11 @@ const Signup = () => {
             )}
             <div>
               <label className="sr-only" htmlFor="username">Username</label>
-              <input 
-                className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500" 
-                id="username" 
+              <input
+                className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500"
+                id="username"
                 name="username"
-                placeholder="Username" 
+                placeholder="Username"
                 type="text"
                 value={user.username}
                 onChange={handleInputChange}
@@ -99,11 +99,11 @@ const Signup = () => {
             </div>
             <div>
               <label className="sr-only" htmlFor="email">Email</label>
-              <input 
-                className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500" 
-                id="email" 
+              <input
+                className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500"
+                id="email"
                 name="email"
-                placeholder="Email" 
+                placeholder="Email"
                 type="email"
                 value={user.email}
                 onChange={handleInputChange}
@@ -111,31 +111,31 @@ const Signup = () => {
             </div>
             <div>
               <label className="sr-only" htmlFor="password">Password</label>
-              <input 
-                className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500" 
-                id="password" 
+              <input
+                className="w-full rounded-lg border-gray-200 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:ring-purple-500"
+                id="password"
                 name="password"
-                placeholder="Password" 
+                placeholder="Password"
                 type="password"
                 value={user.password}
                 onChange={handleInputChange}
               />
             </div>
-            <button 
-              className="w-full rounded-lg bg-[var(--primary-color)] py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-700" 
+            <button
+              className="w-full rounded-lg bg-[var(--primary-color)] py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-700"
               type="submit"
             >
               Create Account
             </button>
           </form>
           <p className="mt-8 text-center text-sm text-gray-500">
-            Already have an account? <a 
-            onClick={()=>navigate('/login')}
-            className="font-semibold text-[var(--primary-color)] hover:underline" href="#">Login</a>
+            Already have an account? <a
+              onClick={() => navigate('/login')}
+              className="font-semibold text-[var(--primary-color)] hover:underline" href="#">Login</a>
           </p>
         </div>
         <div className="relative hidden items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-700 p-12 lg:flex">
-          <div className="absolute inset-0 opacity-10" style={{backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'none\\' fill-rule=\\'evenodd\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.1\\'%3E%3Cpath d=\\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"}}></div>
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'none\\' fill-rule=\\'evenodd\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.1\\'%3E%3Cpath d=\\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}></div>
           <div className="relative z-10 text-center text-white">
             <h1 className="text-5xl font-bold">Turn your ideas into reality</h1>
             <p className="mt-4 text-lg opacity-80">The ultimate collaborative IDE for modern development teams.</p>

@@ -6,6 +6,23 @@ export default defineConfig({
     react()
   ],
   server: {
-    fs: { allow: ['.'] }
+    fs: { allow: ['.'] },
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      'praiseworthily-unlarge-jerry.ngrok-free.dev'
+    ],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/socket.io': {
+        target: 'http://localhost:5000',
+        ws: true,
+        changeOrigin: true
+      }
+    }
   }
 });

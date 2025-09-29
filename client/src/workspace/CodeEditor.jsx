@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import { Editor } from "@monaco-editor/react";
 import LanguageSelector from "./LanguageSelector";
-import { CODE_SNIPPETS } from "../Constants";
+import { CODE_SNIPPETS} from "../Constants";
 import Output from "./Output";
 import DoodleModal from '../components/DoodleModal';
+import { executeCode } from "../api"; // Add missing import
+
 
 const CodeEditor = () => {
   const editorRef = useRef();
@@ -12,6 +14,7 @@ const CodeEditor = () => {
   const [value, setValue] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [isDoodleOpen, setIsDoodleOpen] = useState(false);
+  const [userInput, setUserInput] = useState(""); // Add missing state
 
   const onMount = (editor) => {
     editorRef.current = editor;
@@ -23,24 +26,25 @@ const CodeEditor = () => {
     setValue(CODE_SNIPPETS[language]);
   };
 
-  const handleRunCode = () => {
-    if (outputRef.current) {
-      outputRef.current.runCode();
-    }
-    // Scroll to output section after a short delay to allow for rendering
-    setTimeout(() => {
-      if (outputSectionRef.current) {
-        outputSectionRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
+  const handleRunCode = async() => {
+      const result= await executeCode(language, value,userInput);
+      console.log("Execution result:", result);
+      if (outputRef.current) {
+        outputRef.current.runCode();
       }
-    }, 100);
+    
+      setTimeout(() => {
+        if (outputSectionRef.current) {
+          outputSectionRef.current.scrollIntoView({
+            behavior: 'smooth',
+          });
+        }
+      }, 100);
   };
 
   return (
     <div className="flex flex-col min-h-full p-6 space-y-4">
-      {/* Top Controls */}
+     
       <div className="flex items-center justify-between flex-shrink-0">
         <LanguageSelector language={language} onSelect={onSelect} />
         <div className="flex gap-3">
@@ -61,7 +65,7 @@ const CodeEditor = () => {
         </div>
       </div>
 
-      {/* Editor */}
+      
       <div className="h-[500px] rounded-lg border border-gray-200 bg-gray-50 overflow-hidden shadow-sm">
         <Editor
           options={{
@@ -84,7 +88,7 @@ const CodeEditor = () => {
         />
       </div>
 
-      {/* Output Panel */}
+
       <div ref={outputSectionRef} className="h-64 flex-shrink-0 rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between p-3 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-700">Output</h3>

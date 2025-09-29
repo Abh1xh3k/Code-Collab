@@ -5,6 +5,8 @@ import ChatBox from '../components/ChatBox';
 import LeaveRoomModal from '../components/LeaveRoomModal';
 import axios from 'axios';
 import {io} from 'socket.io-client'
+import toast, { Toaster } from 'react-hot-toast';
+import { API_BASE_URL } from '../Constants';
 
 
 const WorkspaceEditor = () => {
@@ -13,11 +15,6 @@ const WorkspaceEditor = () => {
   const [roomName, setRoomName] = useState('Loading...');
 
   
-  const [socket, setSocket] = useState(null);
-  const [notifications, setNotifications] = useState([]);
-  const [connectionStatus, setConnectionStatus] = useState('Disconnected');
-
- 
   const roomId = localStorage.getItem('currentRoomId');
 
   useEffect(() => {
@@ -30,7 +27,7 @@ const WorkspaceEditor = () => {
       }
 
       try {
-        const res = await axios.get(`http://localhost:5000/api/room/${roomId}`, {
+        const res = await axios.get(`${API_BASE_URL}/room/${roomId}`, {
           headers: {
             Authorization: `Bearer ${token}`
           },
@@ -46,48 +43,6 @@ const WorkspaceEditor = () => {
 
     fetchRoomDetails();
   }, []);
-
-
-  useEffect(()=>{
-    const roomId = localStorage.getItem('currentRoomId');
-    if(!roomId) return ;
-   const token=localStorage.getItem('authToken');
-   const socketConnection=io("http://localhost:5000",{
-    auth:{token}
-   })
-  socketConnection.on('connect',()=>{
-    console.log("socket connected successfully", socketConnection.id);
-    setConnectionStatus('Connected');
-
-    socketConnection.emit('join-room',roomId);
-  })
-
-  socketConnection.on('Connection-err',(error)=>{
-    console.log("Connection error:",error);
-    setConnectionStatus('Error');
-  })
-  socketConnection.on('disconnect',()=>{
-    console.log("Socket disconnected");
-    setConnectionStatus('Disconnected');
-    socketConnection.emit('leave-room',roomId)
-  })
-
- 
-  socketConnection.on('user-joined-room',(data)=>{
-      console.log(' Received user-joined-room notification:', data);
-      setNotifications(prev => [...prev, {
-        message: data.message,
-        timestamp: new Date().toLocaleTimeString()
-      }]);
-  });
-  setSocket(socketConnection);
-  
-  return ()=>{
-    console.log(' Cleaning up socket connection...');
-    socketConnection.disconnect();
-  };
-
-  },[roomId])
 
   const handleLeaveRoom = async() => {
     const token = localStorage.getItem('authToken');
@@ -106,7 +61,7 @@ const WorkspaceEditor = () => {
     }
     
     try{
-      const res = await axios.delete(`http://localhost:5000/api/room/leave/${roomId}`, {
+      const res = await axios.delete(`${API_BASE_URL}/room/leave/${roomId}`, {
         headers:{
           Authorization: `Bearer ${token}`
         },
@@ -116,11 +71,6 @@ const WorkspaceEditor = () => {
       console.log('Leave room response:', res.data);
       
       if (res.status === 200) {
-        // Disconnect socket
-        if(socket){
-          socket.disconnect();
-        }
-
         localStorage.removeItem('currentRoomId');
         alert('Successfully left the room!');
         navigate('/room');
@@ -160,13 +110,6 @@ const WorkspaceEditor = () => {
               <span className="text-sm font-medium text-gray-700">Room: </span>
               <span className="text-sm font-bold text-[var(--primary-color)]">{roomName}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className={`w-2 h-2 rounded-full ${
-                connectionStatus === 'Connected' ? 'bg-green-400' : 
-                connectionStatus === 'Error' ? 'bg-red-400' : 'bg-yellow-400'
-              }`}></div>
-              <span className="text-xs text-gray-600">{connectionStatus}</span>
-            </div>
           </div>
         </div>
         
@@ -183,25 +126,9 @@ const WorkspaceEditor = () => {
           <CodeEditor roomid={roomId} />
         </div>
 
-        {/* Updated ChatBox container with notifications */}
-        <div className="w-[400px] flex-shrink-0 h-full overflow-y-auto flex flex-col">
-          {/* Activity notifications */}
-          {notifications.length > 0 && (
-            <div className="bg-blue-50 border-b p-3">
-              <h4 className="text-xs font-semibold text-blue-800 mb-2">Recent Activity</h4>
-              <div className="space-y-1 max-h-20 overflow-y-auto">
-                {notifications.slice(-3).map((notification, index) => (
-                  <div key={index} className="text-xs text-blue-700">
-                    {notification.message} <span className="text-blue-500">({notification.timestamp})</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-              {/* Chat Box */}
-          <div className="flex-1">
-            <ChatBox />
-          </div>
+      
+        <div className="w-[400px] flex-shrink-0 h-full overflow-y-auto">
+          <ChatBox />
         </div>
       </main>
           
@@ -211,6 +138,9 @@ const WorkspaceEditor = () => {
         onClose={() => setIsLeaveModalOpen(false)}
         onConfirm={handleLeaveRoom}
       />
+      
+
+      <Toaster />
     </div>
   );
 };
