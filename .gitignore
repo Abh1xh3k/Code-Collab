@@ -1,3 +1,5 @@
 node_modules
 socket_workflow.md
 webrtc_implementation_guide.md
+echo "server/.env" >> .gitignore
+echo "client/.env" >> .gitignore
