@@ -70,7 +70,7 @@ const ChatBox = () => {
         console.log('Protocol:', location.protocol);
         console.log('Hostname:', location.hostname);
         
-        // Check if WebRTC is supported
+      
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           throw new Error('WebRTC not supported. Please use HTTPS or localhost.');
         }
@@ -98,13 +98,13 @@ const ChatBox = () => {
         localStreamRef.current = stream;
         setLocalVideoReady(true);
 
-        // Set local video with retry mechanism
+  
         const attachLocalVideo = () => {
           if (localVideoRef.current) {
             localVideoRef.current.srcObject = stream;
             console.log('Local video srcObject set');
             
-            // Force play
+
             localVideoRef.current.play().catch(err => {
               console.warn('Local video autoplay failed:', err);
             });
@@ -176,7 +176,7 @@ const ChatBox = () => {
           return updated;
         });
 
-        // Set video element
+       
         setTimeout(() => {
           const videoEl = remoteVideoRefs.current[targetUserId];
           if (videoEl && videoEl.srcObject !== remoteStream) {
