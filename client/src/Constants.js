@@ -1,4 +1,3 @@
-// API Configuration
 export const API_BASE_URL = '/api' || 'http://localhost:5000';
 
 export const SOCKET_URL = '/';
