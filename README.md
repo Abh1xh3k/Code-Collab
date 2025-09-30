@@ -134,15 +134,15 @@ Create `.env` files in both root and client directories:
 **Server `.env`:**
 ```env
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/codecollab
-JWT_SECRET=your_super_secure_jwt_secret
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
 NODE_ENV=development
 ```
 
 **Client `.env`:**
 ```env
-VITE_API_URL=http://localhost:5000/api
-VITE_SOCKET_URL=http://localhost:5000
+VITE_API_URL=your_backend_api_url
+VITE_SOCKET_URL=your_socket_server_url
 ```
 
 ### Running the Application
@@ -743,7 +743,7 @@ socket.on('user-ready-for-video', (data) => {
 | **Connection Success Rate** | 95%+ | WebRTC peer connection establishment |
 | **Average Latency** | <100ms | Real-time message delivery |
 | **Video Quality** | 720p HD | Default video resolution |
-| **Concurrent Users** | 8 per room | Optimal performance threshold |
+| **Concurrent Users** | 2-4 per room | Optimal performance threshold |
 | **Message Throughput** | 1000+ msg/s | Socket.IO message handling |
 | **Memory Usage** | <50MB | Client-side resource usage |
 
@@ -881,7 +881,7 @@ Each client maintains:
 
 ### Video Call Features
 - **Automatic Start**: Video calls begin when joining a room
-- **Multiple Users**: Support for group video calls (N-to-N connections)
+- **Multiple Users**: Support for group video calls (2-4 users optimal)
 - **Camera Controls**: Toggle camera on/off
 - **Microphone Controls**: Mute/unmute audio
 - **Picture-in-Picture**: Remote users shown in small windows
