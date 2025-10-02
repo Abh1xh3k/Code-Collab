@@ -27,8 +27,6 @@ const CodeEditor = () => {
   };
 
   const handleRunCode = async() => {
-      const result= await executeCode(language, value,userInput);
-      console.log("Execution result:", result);
       if (outputRef.current) {
         outputRef.current.runCode();
       }
@@ -87,7 +85,6 @@ const CodeEditor = () => {
           onChange={(value) => setValue(value)}
         />
       </div>
-
 
       <div ref={outputSectionRef} className="h-64 flex-shrink-0 rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between p-3 border-b border-gray-200">
