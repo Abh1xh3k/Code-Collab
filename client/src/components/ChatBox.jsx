@@ -10,7 +10,7 @@ const ChatBox = () => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  
+
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [remoteStreams, setRemoteStreams] = useState({});
@@ -55,6 +55,16 @@ const ChatBox = () => {
     `}</style>
   );
 
+  // Effect to handle local video element whenever isVideoEnabled changes
+  useEffect(() => {
+    if (isVideoEnabled && localVideoRef.current && localStreamRef.current) {
+      localVideoRef.current.srcObject = localStreamRef.current;
+      localVideoRef.current.play().catch(err => {
+        console.warn('Local video play failed:', err);
+      });
+      console.log('Local video reattached and playing');
+    }
+  }, [isVideoEnabled]);
 
   useEffect(() => {
     if (!roomId || !token || !userId) {
@@ -69,8 +79,8 @@ const ChatBox = () => {
         console.log('=== MEDIA INITIALIZATION START ===');
         console.log('Protocol:', location.protocol);
         console.log('Hostname:', location.hostname);
-        
-      
+
+
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           throw new Error('WebRTC not supported. Please use HTTPS or localhost.');
         }
@@ -84,7 +94,7 @@ const ChatBox = () => {
           video: { width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: true
         });
-        
+
         if (!mounted) {
           console.log('Component unmounted, stopping tracks');
           stream.getTracks().forEach(track => track.stop());
@@ -94,16 +104,16 @@ const ChatBox = () => {
         console.log('Media access granted!');
         console.log('Video tracks:', stream.getVideoTracks().length);
         console.log('Audio tracks:', stream.getAudioTracks().length);
-        
+
         localStreamRef.current = stream;
         setLocalVideoReady(true);
 
-  
+
         const attachLocalVideo = () => {
           if (localVideoRef.current) {
             localVideoRef.current.srcObject = stream;
             console.log('Local video srcObject set');
-            
+
 
             localVideoRef.current.play().catch(err => {
               console.warn('Local video autoplay failed:', err);
@@ -113,14 +123,14 @@ const ChatBox = () => {
             setTimeout(attachLocalVideo, 100);
           }
         };
-        
+
         setTimeout(attachLocalVideo, 100);
 
         return stream;
       } catch (err) {
         console.error('Media access error:', err);
         let errorMessage = 'Unable to access camera/microphone';
-        
+
         if (err.name === 'NotAllowedError') {
           errorMessage = 'Camera/microphone access denied. Please allow permissions and reload.';
         } else if (err.name === 'NotFoundError') {
@@ -128,7 +138,7 @@ const ChatBox = () => {
         } else if (err.message.includes('WebRTC') || err.message.includes('HTTPS')) {
           errorMessage = err.message;
         }
-        
+
         setError(errorMessage);
         return null;
       }
@@ -136,7 +146,7 @@ const ChatBox = () => {
 
     const createPeerConnection = (targetUserId, targetUsername) => {
       console.log(`Creating peer connection for ${targetUsername} (${targetUserId})`);
-      
+
       if (!window.RTCPeerConnection) {
         console.error('RTCPeerConnection not supported');
         return null;
@@ -146,7 +156,7 @@ const ChatBox = () => {
         console.log(`Peer connection already exists for ${targetUsername}, closing old one`);
         peerConnectionsRef.current[targetUserId].close();
       }
-      
+
       const pc = new RTCPeerConnection({
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
@@ -169,14 +179,14 @@ const ChatBox = () => {
       pc.ontrack = (event) => {
         console.log(`Received remote ${event.track.kind} track from ${targetUsername}`);
         const remoteStream = event.streams[0];
-        
+
         setRemoteStreams(prev => {
           const updated = { ...prev, [targetUserId]: remoteStream };
           console.log('Remote streams updated:', Object.keys(updated));
           return updated;
         });
 
-       
+
         setTimeout(() => {
           const videoEl = remoteVideoRefs.current[targetUserId];
           if (videoEl && videoEl.srcObject !== remoteStream) {
@@ -202,7 +212,7 @@ const ChatBox = () => {
       pc.onconnectionstatechange = () => {
         console.log(`Connection state for ${targetUsername}:`, pc.connectionState);
         setConnectionCount(Object.keys(peerConnectionsRef.current).length);
-        
+
         if (pc.connectionState === 'connected') {
           console.log(`Successfully connected to ${targetUsername}`);
         } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
@@ -217,20 +227,20 @@ const ChatBox = () => {
 
       peerConnectionsRef.current[targetUserId] = pc;
       setConnectionCount(Object.keys(peerConnectionsRef.current).length);
-      
+
       return pc;
     };
 
     const createOffer = async (targetUserId, targetUsername) => {
       try {
         console.log(`Creating offer for ${targetUsername}`);
-        
+
         const pc = createPeerConnection(targetUserId, targetUsername);
         if (!pc) {
           console.error('Failed to create peer connection');
           return;
         }
-        
+
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         console.log('Local description set (offer)');
@@ -251,13 +261,13 @@ const ChatBox = () => {
     const handleOffer = async (data) => {
       try {
         console.log(`Handling offer from ${data.callerName}`);
-        
+
         const pc = createPeerConnection(data.callerId, data.callerName);
         if (!pc) {
           console.error('Failed to create peer connection');
           return;
         }
-        
+
         await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
         console.log('Remote description set (offer)');
 
@@ -294,7 +304,7 @@ const ChatBox = () => {
     const handleAnswer = async (data) => {
       try {
         console.log(`Handling answer from ${data.answererName}`);
-        
+
         const pc = peerConnectionsRef.current[data.answererId];
         if (!pc) {
           console.error(`No peer connection found for ${data.answererName}`);
@@ -324,7 +334,7 @@ const ChatBox = () => {
     const handleIceCandidate = async (data) => {
       try {
         const pc = peerConnectionsRef.current[data.senderId];
-        
+
         if (!pc) {
           console.log(`No peer connection yet for ${data.senderId}, queuing candidate`);
           if (!pendingIceCandidatesRef.current[data.senderId]) {
@@ -352,7 +362,7 @@ const ChatBox = () => {
 
     const cleanupPeerConnection = (targetUserId) => {
       console.log(`Cleaning up connection for ${targetUserId}`);
-      
+
       if (peerConnectionsRef.current[targetUserId]) {
         peerConnectionsRef.current[targetUserId].close();
         delete peerConnectionsRef.current[targetUserId];
@@ -384,7 +394,7 @@ const ChatBox = () => {
 
       console.log('=== SOCKET CONNECTION START ===');
       console.log('Connecting to:', SOCKET_URL);
-      
+
       const socket = io(SOCKET_URL, {
         auth: { token },
         transports: ['websocket', 'polling']
@@ -395,7 +405,7 @@ const ChatBox = () => {
       socket.on('connect', () => {
         console.log('Socket connected, ID:', socket.id);
         socket.emit('join-room', roomId);
-        
+
         setTimeout(() => {
           socket.emit('user-ready-for-video', {
             userId,
@@ -444,7 +454,7 @@ const ChatBox = () => {
     return () => {
       mounted = false;
       console.log('=== CLEANUP START ===');
-      
+
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(track => {
           track.stop();
@@ -492,10 +502,10 @@ const ChatBox = () => {
   // Normalize message
   const normalizeMessage = (raw) => {
     if (!raw) return null;
-    
+
     const senderId = raw.sender?._id || raw.sender?.id || raw.userId || raw.user;
-    const senderUsername = raw.sender?.username || raw.username || 
-                          (String(senderId) === String(userId) ? currentUsername : "Unknown User");
+    const senderUsername = raw.sender?.username || raw.username ||
+      (String(senderId) === String(userId) ? currentUsername : "Unknown User");
 
     return {
       _id: String(raw._id || raw.id || `msg-${Date.now()}-${Math.random()}`),
@@ -520,15 +530,15 @@ const ChatBox = () => {
 
     const fetchMessages = async () => {
       setLoading(true);
-      
+
       try {
         const res = await axios.get(`${API_BASE_URL}/chat/getMessage/${roomId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
-        let rawList = Array.isArray(res.data) ? res.data : 
-                      Array.isArray(res.data.messages) ? res.data.messages :
-                      Array.isArray(res.data.data) ? res.data.data : [];
+        let rawList = Array.isArray(res.data) ? res.data :
+          Array.isArray(res.data.messages) ? res.data.messages :
+            Array.isArray(res.data.data) ? res.data.data : [];
 
         const normalized = rawList
           .map(normalizeMessage)
@@ -590,11 +600,10 @@ const ChatBox = () => {
             <span className="text-xs text-gray-500 mb-1 px-2">
               {isCurrentUser ? 'You' : msg.sender.username}
             </span>
-            <div className={`px-4 py-2 rounded-2xl ${
-              isCurrentUser 
-                ? 'bg-blue-500 text-white rounded-br-md' 
-                : 'bg-gray-200 text-gray-900 rounded-bl-md'
-            }`}>
+            <div className={`px-4 py-2 rounded-2xl ${isCurrentUser
+              ? 'bg-blue-500 text-white rounded-br-md'
+              : 'bg-gray-200 text-gray-900 rounded-bl-md'
+              }`}>
               {msg.text}
             </div>
             <span className="text-xs text-gray-400 mt-1 px-2">
@@ -631,7 +640,7 @@ const ChatBox = () => {
             style={index > 0 ? { right: `${3 + index * 120}px` } : {}}
           />
         ))}
-        
+
         {Object.keys(remoteStreams).length === 0 && (
           <div className="flex items-center justify-center w-full h-full bg-gray-800">
             <div className="text-center text-white">
@@ -642,7 +651,7 @@ const ChatBox = () => {
         )}
 
         {/* Local Video */}
-        {isVideoEnabled && localVideoReady && (
+        {isVideoEnabled && (
           <video
             ref={localVideoRef}
             autoPlay
@@ -652,7 +661,7 @@ const ChatBox = () => {
             style={{ transform: 'scaleX(-1)' }}
           />
         )}
-        
+
         {!isVideoEnabled && (
           <div className="absolute top-3 right-3 w-28 h-20 bg-gray-900 border-2 border-white rounded-lg flex items-center justify-center">
             <span className="text-white text-3xl">📷</span>
@@ -663,18 +672,16 @@ const ChatBox = () => {
         <div className="absolute bottom-3 left-3 flex gap-2">
           <button
             onClick={toggleVideo}
-            className={`px-3 py-2 rounded-lg font-medium transition ${
-              isVideoEnabled ? 'bg-white text-gray-800' : 'bg-red-500 text-white'
-            }`}
+            className={`px-3 py-2 rounded-lg font-medium transition ${isVideoEnabled ? 'bg-white text-gray-800' : 'bg-red-500 text-white'
+              }`}
           >
             {isVideoEnabled ? '📹' : '📷'}
           </button>
-          
+
           <button
             onClick={toggleAudio}
-            className={`px-3 py-2 rounded-lg font-medium transition ${
-              isAudioEnabled ? 'bg-white text-gray-800' : 'bg-red-500 text-white'
-            }`}
+            className={`px-3 py-2 rounded-lg font-medium transition ${isAudioEnabled ? 'bg-white text-gray-800' : 'bg-red-500 text-white'
+              }`}
           >
             {isAudioEnabled ? '🎤' : '🔇'}
           </button>
