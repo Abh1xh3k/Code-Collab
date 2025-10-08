@@ -1,21 +1,60 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Editor } from "@monaco-editor/react";
 import LanguageSelector from "./LanguageSelector";
-import { CODE_SNIPPETS} from "../Constants";
+import { CODE_SNIPPETS, SOCKET_URL } from "../Constants";
 import Output from "./Output";
 import DoodleModal from '../components/DoodleModal';
-import { executeCode } from "../api"; // Add missing import
+import { io } from 'socket.io-client'; 
 
 
 const CodeEditor = () => {
   const editorRef = useRef();
   const outputRef = useRef();
   const outputSectionRef = useRef();
-  const [value, setValue] = useState("");
+  const socketRef = useRef();
+  const [code, setcode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [isDoodleOpen, setIsDoodleOpen] = useState(false);
-  const [userInput, setUserInput] = useState(""); // Add missing state
+  const [isConnected, setIsConnected] = useState(false);
+  const roomId = localStorage.getItem('currentRoomId');
+  const token = localStorage.getItem("authToken") || "";
 
+  useEffect(() => {
+    if (!token || !roomId) {
+      console.log('Skipping socket init: missing token or roomId', { hasToken: !!token, hasRoomId: !!roomId });
+      return;
+    }
+
+    const socket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log("✅ Socket connected:", socket.id);
+      setIsConnected(true);
+      socket.emit('join-room', roomId);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('🔌 Socket disconnected:', reason);
+      setIsConnected(false);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Socket connect_error:', err?.message || err);
+    });
+
+    socket.on('codeUpdate', (newCode) => {
+      console.log('📝 Received code update:', newCode);
+      setcode(newCode);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [roomId, token]);
   const onMount = (editor) => {
     editorRef.current = editor;
     editor.focus();
@@ -23,8 +62,21 @@ const CodeEditor = () => {
 
   const onSelect = (language) => {
     setLanguage(language);
-    setValue(CODE_SNIPPETS[language]);
+    setcode(CODE_SNIPPETS[language]);
   };
+    const handleCodeChange = (newCode) => {;
+      try{
+        setcode(newCode);
+        if (socketRef.current && isConnected && roomId) {
+          console.log('📤 Sending code change to room:', roomId);
+          socketRef.current.emit('code-change', { roomId, code: newCode });
+        }
+      }
+      catch(error){
+        console.error("Error in handleCodeChange:", error);
+        socketRef.current.emit("message-error", { error: 'Socket error occurred' });
+      }
+    }
 
   const handleRunCode = async() => {
       if (outputRef.current) {
@@ -44,7 +96,15 @@ const CodeEditor = () => {
     <div className="flex flex-col min-h-full p-6 space-y-4">
      
       <div className="flex items-center justify-between flex-shrink-0">
-        <LanguageSelector language={language} onSelect={onSelect} />
+        <div className="flex items-center gap-4">
+          <LanguageSelector language={language} onSelect={onSelect} />
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <span className="text-xs text-gray-600">
+              {isConnected ? 'Connected' : 'Disconnected'}
+            </span>
+          </div>
+        </div>
         <div className="flex gap-3">
           <button 
             onClick={handleRunCode}
@@ -77,12 +137,12 @@ const CodeEditor = () => {
             padding: { top: 10 }
           }}
           height="100%"
-          theme="vs-light"
+          theme="vs-dark"
           language={language}
           defaultValue={CODE_SNIPPETS[language]}
           onMount={onMount}
-          value={value}
-          onChange={(value) => setValue(value)}
+          value={code}
+          onChange={handleCodeChange}
         />
       </div>
 
