@@ -76,7 +76,6 @@ const ChatBox = () => {
 
     const initializeMedia = async () => {
       try {
-        console.log('=== MEDIA INITIALIZATION START ===');
         console.log('Protocol:', location.protocol);
         console.log('Hostname:', location.hostname);
 
@@ -164,7 +163,6 @@ const ChatBox = () => {
         ]
       });
 
-      // Add local tracks
       const localStream = localStreamRef.current;
       if (localStream) {
         localStream.getTracks().forEach(track => {
@@ -303,7 +301,7 @@ const ChatBox = () => {
 
     const handleAnswer = async (data) => {
       try {
-        console.log(`Handling answer from ${data.answererName}`);
+
 
         const pc = peerConnectionsRef.current[data.answererId];
         if (!pc) {
@@ -312,11 +310,11 @@ const ChatBox = () => {
         }
 
         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-        console.log('Remote description set (answer)');
+ 
 
         // Process pending ICE candidates
         if (pendingIceCandidatesRef.current[data.answererId]) {
-          console.log(`Processing ${pendingIceCandidatesRef.current[data.answererId].length} pending candidates`);
+
           for (const candidate of pendingIceCandidatesRef.current[data.answererId]) {
             try {
               await pc.addIceCandidate(candidate);
@@ -336,7 +334,7 @@ const ChatBox = () => {
         const pc = peerConnectionsRef.current[data.senderId];
 
         if (!pc) {
-          console.log(`No peer connection yet for ${data.senderId}, queuing candidate`);
+   
           if (!pendingIceCandidatesRef.current[data.senderId]) {
             pendingIceCandidatesRef.current[data.senderId] = [];
           }
@@ -345,7 +343,6 @@ const ChatBox = () => {
         }
 
         if (!pc.remoteDescription) {
-          console.log(`No remote description yet for ${data.senderId}, queuing candidate`);
           if (!pendingIceCandidatesRef.current[data.senderId]) {
             pendingIceCandidatesRef.current[data.senderId] = [];
           }
@@ -354,14 +351,12 @@ const ChatBox = () => {
         }
 
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        console.log(`ICE candidate added for ${data.senderId}`);
       } catch (err) {
         console.error('Error adding ICE candidate:', err);
       }
     };
 
     const cleanupPeerConnection = (targetUserId) => {
-      console.log(`Cleaning up connection for ${targetUserId}`);
 
       if (peerConnectionsRef.current[targetUserId]) {
         peerConnectionsRef.current[targetUserId].close();
@@ -392,9 +387,6 @@ const ChatBox = () => {
         return;
       }
 
-      console.log('=== SOCKET CONNECTION START ===');
-      console.log('Connecting to:', SOCKET_URL);
-
       const socket = io(SOCKET_URL, {
         auth: { token },
         transports: ['websocket', 'polling']
@@ -403,7 +395,7 @@ const ChatBox = () => {
       socketRef.current = socket;
 
       socket.on('connect', () => {
-        console.log('Socket connected, ID:', socket.id);
+      
         socket.emit('join-room', roomId);
 
         setTimeout(() => {
@@ -412,7 +404,6 @@ const ChatBox = () => {
             username: currentUsername,
             roomId
           });
-          console.log('Signaled video readiness');
         }, 1000);
       });
 
@@ -453,24 +444,23 @@ const ChatBox = () => {
 
     return () => {
       mounted = false;
-      console.log('=== CLEANUP START ===');
 
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(track => {
           track.stop();
-          console.log(`Stopped ${track.kind} track`);
+         
         });
       }
 
       Object.entries(peerConnectionsRef.current).forEach(([id, pc]) => {
         pc.close();
-        console.log(`Closed peer connection for ${id}`);
+      
       });
       peerConnectionsRef.current = {};
 
       if (socketRef.current) {
         socketRef.current.disconnect();
-        console.log('Socket disconnected');
+    
       }
     };
   }, [roomId, token, userId]);
@@ -482,7 +472,6 @@ const ChatBox = () => {
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         setIsVideoEnabled(videoTrack.enabled);
-        console.log(`Video ${videoTrack.enabled ? 'enabled' : 'disabled'}`);
       }
     }
   };
@@ -494,7 +483,6 @@ const ChatBox = () => {
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setIsAudioEnabled(audioTrack.enabled);
-        console.log(`Audio ${audioTrack.enabled ? 'enabled' : 'disabled'}`);
       }
     }
   };

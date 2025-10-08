@@ -9,8 +9,8 @@ export function setupSocket(server) {
             origin: [
                 "http://localhost:5173",
                 "http://172.20.10.4/:5173", // Replace with your computer's IP
-                'http://30.10.38.51:5173', // Replace with your computer's IP
-
+                'http://30.10.38.51:5173',
+                'https://praiseworthy-unlarge-jerry.ngrok-free.dev', // Your ngrok domain
             ],
             methods: ["GET", "POST"],
             credentials: true,
@@ -43,7 +43,7 @@ export function setupSocket(server) {
 
 
         socket.on('join-room', (roomId) => {
-            console.log(`${socket.username} attempting to join room: ${roomId}`);
+           
 
             socket.join(roomId);
             socket.currentRoomId = roomId;
@@ -60,16 +60,13 @@ export function setupSocket(server) {
                 username: socket.username,
                 roomId: roomId
             });
-
-            console.log(`Broadcasted join notification to other users in room ${roomId}`);
+        console.log(`Broadcasted join notification to other users in room ${roomId}`);
         });
-
         socket.on('disconnect', () => {
             console.log(`${socket.username} disconnected from socket (Socket ID: ${socket.id})`);
 
 
             if (socket.currentRoomId) {
-                console.log(`${socket.username} was in room ${socket.currentRoomId}, notifying others of disconnect`);
 
                 socket.to(socket.currentRoomId).emit('user-left-room', {
                     userId: socket.userId,
@@ -144,6 +141,11 @@ export function setupSocket(server) {
             });
         });
 
+        socket.on('code-change',({roomId,code})=>{
+            console.log("Code change received:", { roomId, codeLength: code?.length });
+            socket.to(roomId).emit("codeUpdate",code);
+        })
+  
     });
 
     return io;
