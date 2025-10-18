@@ -1,7 +1,7 @@
 import { useState, forwardRef, useImperativeHandle, useRef, useEffect } from "react";
 import { executeCode } from "../api";
 
-const Output = forwardRef(({ editorRef, language }, ref) => {
+const Output = forwardRef(({ editorRef, language, socket, roomId, isConnected }, ref) => {
   const [consoleLines, setConsoleLines] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -24,6 +24,119 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
     }
   }, [consoleLines]);
 
+  // WebSocket event listeners for collaborative code execution
+  useEffect(() => {
+    if (!socket || !isConnected || !roomId) return;
+
+    // Listen for code execution from other users
+    const handleCodeExecution = (data) => {
+      console.log('📥 Received code execution from another user:', data);
+      if (data.roomId === roomId && data.language === language) {
+        // Clear output for all users when any user runs a new program
+        setConsoleLines([]);
+        setIsLoading(true);
+        setIsError(false);
+        setWaitingForInput(false);
+        setInputQueue([]);
+        setCurrentInput("");
+        console.log(`User ${data.username} is executing ${language} code - output cleared`);
+      }
+    };
+
+    // Listen for execution results from other users
+    const handleExecutionResult = (data) => {
+      console.log('📥 Received execution result from another user:', data);
+      if (data.roomId === roomId) {
+        // Add results from other users without username prefix
+        if (data.isError) {
+          addToConsole(data.result, "error");
+        } else {
+          // Parse and display the output without username prefix
+          const outputLines = data.result.split('\n');
+          outputLines.forEach(line => {
+            if (line.trim()) {
+              addToConsole(line, "output");
+            }
+          });
+        }
+      }
+    };
+
+    // Listen for input requests from other users
+    const handleInputRequest = (data) => {
+      console.log('📥 Received input request from another user:', data);
+      if (data.roomId === roomId) {
+        // Show the prompt and enable input for all users
+        addToConsole(data.prompt, "prompt");
+        setWaitingForInput(true);
+        // Don't set pendingExecutionRef here as it should be managed by the original user
+      }
+    };
+
+    // Listen for input responses from other users
+    const handleInputResponse = (data) => {
+      console.log('📥 Received input response from another user:', data);
+      if (data.roomId === roomId) {
+        addToConsole(data.input, "input");
+        
+        // If we have a pending execution, continue it with the input from another user
+        if (pendingExecutionRef.current) {
+          const { sourceCode, allInputs } = pendingExecutionRef.current;
+          const newInputs = [...allInputs, data.input];
+          setWaitingForInput(false);
+          continueExecution(sourceCode, newInputs);
+        }
+      }
+    };
+
+    // Listen for execution continuation from other users
+    const handleExecutionContinue = (data) => {
+      console.log('📥 Received execution continuation from another user:', data);
+      if (data.roomId === roomId) {
+        // Update our pending execution with the new inputs
+        if (pendingExecutionRef.current) {
+          pendingExecutionRef.current.allInputs = data.allInputs;
+          setWaitingForInput(false);
+          continueExecution(pendingExecutionRef.current.sourceCode, data.allInputs);
+        }
+      }
+    };
+
+    // Listen for language changes from other users
+    const handleLanguageChange = (data) => {
+      console.log('📥 Received language change from another user:', data);
+      if (data.roomId === roomId) {
+        // Clear output when language changes
+        setConsoleLines([]);
+        setIsLoading(false);
+        setIsError(false);
+        setWaitingForInput(false);
+        setInputQueue([]);
+        setCurrentInput("");
+        pendingExecutionRef.current = null;
+        console.log(`Language changed to ${data.language} by ${data.username} - output cleared`);
+      }
+    };
+
+    // Register event listeners
+    socket.on('code-execution', handleCodeExecution);
+    socket.on('execution-result', handleExecutionResult);
+    socket.on('input-request', handleInputRequest);
+    socket.on('input-response', handleInputResponse);
+    socket.on('execution-continue', handleExecutionContinue);
+    socket.on('languageUpdate', handleLanguageChange);
+
+    // Cleanup event listeners
+    return () => {
+      socket.off('code-execution', handleCodeExecution);
+      socket.off('execution-result', handleExecutionResult);
+      socket.off('input-request', handleInputRequest);
+      socket.off('input-response', handleInputResponse);
+      socket.off('execution-continue', handleExecutionContinue);
+      socket.off('languageUpdate', handleLanguageChange);
+    };
+  }, [socket, isConnected, roomId, language]);
+
   const addToConsole = (text, type = "output") => {
     setConsoleLines(prev => [...prev, { text, type, timestamp: Date.now() }]);
   };
@@ -35,6 +148,11 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
     // Add the input to console
     addToConsole(currentInput, "input");
     
+    // Emit input response to other users
+    if (socket && isConnected && roomId) {
+      socket.emit('input-response', { roomId, input: currentInput });
+    }
+    
     // Add to input queue
     setInputQueue(prev => [...prev, currentInput]);
     setCurrentInput("");
@@ -44,6 +162,12 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
     if (pendingExecutionRef.current) {
       const { sourceCode, allInputs } = pendingExecutionRef.current;
       const newInputs = [...allInputs, currentInput];
+      
+      // Emit execution continuation to other users
+      if (socket && isConnected && roomId) {
+        socket.emit('execution-continue', { roomId, allInputs: newInputs });
+      }
+      
       continueExecution(sourceCode, newInputs);
     }
   };
@@ -147,6 +271,11 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
       addToConsole(nextPrompt, "prompt");
       setWaitingForInput(true);
       pendingExecutionRef.current = { sourceCode, allInputs: inputs };
+      
+      // Emit input request to other users so they can also provide input
+      if (socket && isConnected && roomId) {
+        socket.emit('input-request', { roomId, prompt: nextPrompt });
+      }
       return;
     }
 
@@ -158,9 +287,15 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
       if (result.stderr) {
         addToConsole(result.stderr, "error");
         setIsError(true);
+        
+        // Emit error result to other users
+        if (socket && isConnected && roomId) {
+          socket.emit('execution-result', { roomId, result: result.stderr, isError: true });
+        }
       } else {
         // Parse output and handle the concatenated prompts properly
         const outputLines = result.output.split('\n');
+        let finalOutput = '';
         
         outputLines.forEach(line => {
           const trimmedLine = line.trim();
@@ -173,23 +308,36 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
                 const actualOutput = parts[1].trim();
                 if (actualOutput) {
                   addToConsole(actualOutput, "output");
+                  finalOutput += actualOutput + '\n';
                 }
               }
             } else {
               // Regular output line, show as-is
               addToConsole(line, "output");
+              finalOutput += line + '\n';
             }
           }
         });
+        
+        // Emit success result to other users
+        if (socket && isConnected && roomId) {
+          socket.emit('execution-result', { roomId, result: finalOutput.trim(), isError: false });
+        }
       }
       
       setIsLoading(false);
       pendingExecutionRef.current = null;
     } catch (error) {
-      addToConsole("An error occurred: " + (error.message || "Unable to run code"), "error");
+      const errorMessage = "An error occurred: " + (error.message || "Unable to run code");
+      addToConsole(errorMessage, "error");
       setIsError(true);
       setIsLoading(false);
       pendingExecutionRef.current = null;
+      
+      // Emit error result to other users
+      if (socket && isConnected && roomId) {
+        socket.emit('execution-result', { roomId, result: errorMessage, isError: true });
+      }
     }
   };
 
@@ -197,13 +345,19 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
     const sourceCode = editorRef.current.getValue();
     if (!sourceCode) return;
 
-    // Clear previous output
+    // Clear previous output first
     setConsoleLines([]);
     setIsLoading(true);
     setIsError(false);
     setWaitingForInput(false);
     setInputQueue([]);
     setCurrentInput("");
+
+    // Emit code execution event to other users (this will clear their output too)
+    if (socket && isConnected && roomId) {
+      console.log('📤 Emitting code execution to room:', roomId);
+      socket.emit('code-execution', { roomId, language, code: sourceCode });
+    }
     
     // Extract prompts from the code
     const prompts = extractInputPrompts(sourceCode);
@@ -214,6 +368,11 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
       setWaitingForInput(true);
       setIsLoading(false);
       pendingExecutionRef.current = { sourceCode, allInputs: [] };
+      
+      // Emit input request to other users
+      if (socket && isConnected && roomId) {
+        socket.emit('input-request', { roomId, prompt: prompts[0] });
+      }
     } else {
       // No input needed, execute directly
       try {
@@ -222,6 +381,11 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
         if (result.stderr) {
           addToConsole(result.stderr, "error");
           setIsError(true);
+          
+          // Emit error result to other users
+          if (socket && isConnected && roomId) {
+            socket.emit('execution-result', { roomId, result: result.stderr, isError: true });
+          }
         } else {
           const outputLines = result.output.split('\n');
           outputLines.forEach(line => {
@@ -229,12 +393,23 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
               addToConsole(line, "output");
             }
           });
+          
+          // Emit success result to other users
+          if (socket && isConnected && roomId) {
+            socket.emit('execution-result', { roomId, result: result.output, isError: false });
+          }
         }
         setIsLoading(false);
       } catch (error) {
-        addToConsole("An error occurred: " + (error.message || "Unable to run code"), "error");
+        const errorMessage = "An error occurred: " + (error.message || "Unable to run code");
+        addToConsole(errorMessage, "error");
         setIsError(true);
         setIsLoading(false);
+        
+        // Emit error result to other users
+        if (socket && isConnected && roomId) {
+          socket.emit('execution-result', { roomId, result: errorMessage, isError: true });
+        }
       }
     }
   };

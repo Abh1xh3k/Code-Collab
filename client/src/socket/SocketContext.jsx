@@ -22,14 +22,20 @@ export const SocketProvider = ({ children }) => {
         if (token) {
             // Use environment variable for production (ngrok) or fallback to localhost for development
             const socketUrl = import.meta.env.VITE_SOCKET_URL || 
-                             (window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin);
+                             (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
             console.log('🔗 Connecting to socket server:', socketUrl);
             console.log('🔧 Environment VITE_SOCKET_URL:', import.meta.env.VITE_SOCKET_URL);
             
             const newSocket = io(socketUrl, {
                 auth: {
                     token: token
-                }
+                },
+                timeout: 20000,
+                forceNew: true,
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5,
+                maxReconnectionAttempts: 5
             });
 
             newSocket.on('connect', () => {
