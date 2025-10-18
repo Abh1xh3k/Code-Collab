@@ -32,7 +32,7 @@ const CodeEditor = () => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log("✅ Socket connected:", socket.id);
+      console.log("Socket connected:", socket.id);
       setIsConnected(true);
       socket.emit('join-room', roomId);
     });
@@ -47,14 +47,31 @@ const CodeEditor = () => {
     });
 
     socket.on('codeUpdate', (newCode) => {
-      console.log('📝 Received code update:', newCode);
       setcode(newCode);
+    });
+
+    socket.on('languageUpdate', (data) => {
+      console.log('📥 Received language change:', data);
+      setLanguage(data.language);
+      setcode(data.code);
     });
 
     return () => {
       socket.disconnect();
     };
   }, [roomId, token]);
+
+  // Update Monaco Editor language when language state changes
+  useEffect(() => {
+    if (editorRef.current) {
+      const model = editorRef.current.getModel();
+      if (model) {
+        // Use the correct Monaco Editor API to change language
+        window.monaco.editor.setModelLanguage(model, language);
+      }
+    }
+  }, [language]);
+
   const onMount = (editor) => {
     editorRef.current = editor;
     editor.focus();
@@ -63,6 +80,16 @@ const CodeEditor = () => {
   const onSelect = (language) => {
     setLanguage(language);
     setcode(CODE_SNIPPETS[language]);
+    
+    // Emit language change to other users
+    if (socketRef.current && isConnected && roomId) {
+      console.log('📤 Sending language change to room:', roomId, language);
+      socketRef.current.emit('language-change', { 
+        roomId, 
+        language, 
+        code: CODE_SNIPPETS[language] 
+      });
+    }
   };
     const handleCodeChange = (newCode) => {;
       try{
@@ -154,7 +181,14 @@ const CodeEditor = () => {
           </button>
         </div>
         <div className="p-4 h-52 overflow-auto">
-          <Output ref={outputRef} editorRef={editorRef} language={language} />
+          <Output 
+            ref={outputRef} 
+            editorRef={editorRef} 
+            language={language} 
+            socket={socketRef.current}
+            roomId={roomId}
+            isConnected={isConnected}
+          />
         </div>
       </div>
       

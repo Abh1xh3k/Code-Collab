@@ -17,11 +17,26 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
+        timeout: 30000,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Request:', req.method, req.url);
+          });
+        }
       },
       '/socket.io': {
         target: 'http://localhost:5000',
         ws: true,
-        changeOrigin: true
+        changeOrigin: true,
+        timeout: 30000,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Socket proxy error:', err);
+          });
+        }
       }
     }
   }

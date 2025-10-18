@@ -144,7 +144,70 @@ export function setupSocket(server) {
         socket.on('code-change',({roomId,code})=>{
             console.log("Code change received:", { roomId, codeLength: code?.length });
             socket.to(roomId).emit("codeUpdate",code);
-        })
+        });
+
+        socket.on('language-change', (data) => {
+            console.log(`Language change from ${socket.username} in room: ${data.roomId} to ${data.language}`);
+            socket.to(data.roomId).emit('languageUpdate', {
+                language: data.language,
+                code: data.code,
+                userId: socket.userId,
+                username: socket.username
+            });
+        });
+
+        // Code execution WebSocket events
+        socket.on('code-execution', (data) => {
+            console.log(`Code execution from ${socket.username} in room: ${data.roomId}`);
+            socket.to(data.roomId).emit('code-execution', {
+                roomId: data.roomId,
+                language: data.language,
+                code: data.code,
+                userId: socket.userId,
+                username: socket.username
+            });
+        });
+
+        socket.on('execution-result', (data) => {
+            console.log(`Execution result from ${socket.username} in room: ${data.roomId}`);
+            socket.to(data.roomId).emit('execution-result', {
+                roomId: data.roomId,
+                result: data.result,
+                isError: data.isError,
+                userId: socket.userId,
+                username: socket.username
+            });
+        });
+
+        socket.on('input-request', (data) => {
+            console.log(`Input request from ${socket.username} in room: ${data.roomId}`);
+            socket.to(data.roomId).emit('input-request', {
+                roomId: data.roomId,
+                prompt: data.prompt,
+                userId: socket.userId,
+                username: socket.username
+            });
+        });
+
+        socket.on('input-response', (data) => {
+            console.log(`Input response from ${socket.username} in room: ${data.roomId}`);
+            socket.to(data.roomId).emit('input-response', {
+                roomId: data.roomId,
+                input: data.input,
+                userId: socket.userId,
+                username: socket.username
+            });
+        });
+
+        socket.on('execution-continue', (data) => {
+            console.log(`Execution continuation from ${socket.username} in room: ${data.roomId}`);
+            socket.to(data.roomId).emit('execution-continue', {
+                roomId: data.roomId,
+                allInputs: data.allInputs,
+                userId: socket.userId,
+                username: socket.username
+            });
+        });
   
     });
 
