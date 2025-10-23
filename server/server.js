@@ -25,6 +25,7 @@ app.use(cookieParser());
 const port = process.env.PORT || 3000;
 const corsOption = {
     origin: [
+        "https://code-collab-2cj6-e9mi3e6qy-abhis-projects-82b05815.vercel.app",
         'http://localhost:5173',
         'http://172.20.10.4:5173',
         'http://30.10.38.51:5173',
