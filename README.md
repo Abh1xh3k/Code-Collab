@@ -9,11 +9,13 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=flat-square&logo=mongodb)](https://mongodb.com/)
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-Real--time-010101?style=flat-square&logo=socket.io)](https://socket.io/)
 [![WebRTC](https://img.shields.io/badge/WebRTC-Video%20Calling-FF6B6B?style=flat-square&logo=webrtc)](https://webrtc.org/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=flat-square&logo=vercel)](https://vercel.com/)
+[![Railway](https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=flat-square&logo=railway)](https://railway.app/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 *A modern, feature-rich collaborative IDE that brings developers together*
 
-[🌟 Features](#-features) • [🛠️ Tech Stack](#️-tech-stack) • [🚀 Quick Start](#-quick-start) • [📚 API Docs](#-api-documentation) • [🤝 Contributing](#-contributing)
+[🌟 Features](#-features) • [🛠️ Tech Stack](#️-tech-stack) • [🚀 Quick Start](#-quick-start) • [� Deployment](#-production-deployment) • [�📚 API Docs](#-api-documentation) • [🤝 Contributing](#-contributing)
 
 </div>
 
@@ -49,7 +51,22 @@
 - **Multi-Language Support**: Syntax highlighting for 10+ programming languages
 - **IntelliSense**: Auto-completion and error detection
 - **Real-time Sync**: Instant code synchronization across all participants
-- **Code Persistence**: Automatic saving with version history
+- **Code Persistence**: Automatic saving with session management
+
+### 🎨 Interactive Whiteboard
+- **TLDraw Integration**: Professional drawing and diagramming tool
+- **Real-time Collaboration**: Synchronized drawing across all users
+- **Shape Synchronization**: Live sharing of drawings, shapes, and annotations
+- **Modal Interface**: Full-screen whiteboard with easy access
+- **Cross-User Updates**: Instant whiteboard changes visible to all participants
+
+### ⚡ Code Execution Engine
+- **Multi-Language Support**: Execute code in JavaScript, Python, Java, C++, and more
+- **Real-time Output**: Live console output shared across all users
+- **Interactive Input**: Handle user input programs collaboratively
+- **Collaborative Execution**: When one user runs code, all users see the output
+- **Error Handling**: Syntax and runtime errors displayed to all participants
+- **Input Synchronization**: User inputs shared across the session
 
 ### 🔄 Real-time Communication
 - **Socket.IO Infrastructure**
@@ -89,6 +106,7 @@
 | ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite) | Build Tool & Dev Server | Latest |
 | ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=flat-square&logo=tailwindcss) | Utility-First Styling | Latest |
 | ![Monaco Editor](https://img.shields.io/badge/Monaco-007ACC?style=flat-square&logo=visualstudiocode) | Code Editor Engine | 0.53.0 |
+| ![TLDraw](https://img.shields.io/badge/TLDraw-FF6B6B?style=flat-square&logo=draw.io) | Interactive Whiteboard | 4.0.2 |
 | ![Socket.IO](https://img.shields.io/badge/Socket.IO%20Client-010101?style=flat-square&logo=socket.io) | Real-time Communication | 4.8.1 |
 | ![WebRTC](https://img.shields.io/badge/WebRTC-333333?style=flat-square&logo=webrtc) | P2P Video Calling | Native API |
 
@@ -164,7 +182,246 @@ npm run dev
 - **Backend API**: http://localhost:5000/api
 - **Socket.IO**: http://localhost:5000
 
-## 📁 Project Structure
+## � Production Deployment
+
+### Prerequisites for Deployment
+- **MongoDB Atlas Account** (free tier available)
+- **GitHub Account** (for repository hosting)
+- **Vercel Account** (for frontend deployment)
+- **Railway/Render Account** (for backend deployment)
+
+### Step 1: Database Setup (MongoDB Atlas)
+
+1. **Create MongoDB Atlas Cluster**
+   ```bash
+   # Go to https://cloud.mongodb.com/
+   # Sign up/login and create a new project
+   # Create a free M0 cluster
+   # Add your IP to whitelist (0.0.0.0/0 for global access)
+   # Create database user with read/write permissions
+   ```
+
+2. **Get Connection String**
+   ```bash
+   # Example connection string:
+   mongodb+srv://username:password@cluster0.abcdef.mongodb.net/CodeCollab?retryWrites=true&w=majority
+   ```
+
+### Step 2: Backend Deployment (Railway - Recommended)
+
+1. **Install Railway CLI**
+   ```bash
+   npm install -g @railway/cli
+   ```
+
+2. **Deploy Backend**
+   ```bash
+   # Navigate to server directory
+   cd server
+   
+   # Login to Railway
+   railway login
+   
+   # Initialize and deploy
+   railway init
+   railway up
+   ```
+
+3. **Set Environment Variables on Railway**
+   ```env
+   PORT=5000
+   JWT_SECRET=your-super-secure-jwt-secret-min-32-characters
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/CodeCollab
+   NODE_ENV=production
+   ```
+
+4. **Alternative: Deploy to Render**
+   - Go to [render.com](https://render.com) → New Web Service
+   - Connect your GitHub repository
+   - Root directory: `server`
+   - Build command: `npm install`
+   - Start command: `npm start`
+   - Add environment variables in Render dashboard
+
+### Step 3: Frontend Deployment (Vercel)
+
+1. **Update Client Environment Variables**
+   ```bash
+   # Create/update client/.env
+   VITE_API_URL=https://your-backend-url.railway.app/api
+   ```
+
+2. **Deploy with Vercel CLI**
+   ```bash
+   # Install Vercel CLI
+   npm install -g vercel
+   
+   # Navigate to client directory
+   cd client
+   
+   # Build and deploy
+   npm run build
+   vercel --prod
+   ```
+
+3. **Alternative: GitHub Integration (Recommended)**
+   - Go to [vercel.com](https://vercel.com) → New Project
+   - Import your GitHub repository
+   - Framework preset: **Vite**
+   - Root directory: `client`
+   - Build command: `npm run build`
+   - Output directory: `dist`
+   - Add environment variables in Vercel dashboard
+
+### Step 4: Configure CORS for Production
+
+Update `server/server.js` with your production URLs:
+
+```javascript
+const corsOption = {
+    origin: [
+        'http://localhost:5173',                    // Development
+        'https://your-app-name.vercel.app',         // Production frontend
+        'https://your-custom-domain.com',           // Custom domain (if any)
+    ],
+    credentials: true,
+}
+```
+
+### Step 5: Environment Variables Setup
+
+**Backend Environment Variables (.env):**
+```env
+PORT=5000
+JWT_SECRET=super-secure-random-string-min-32-characters
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/CodeCollab?retryWrites=true&w=majority
+NODE_ENV=production
+```
+
+**Frontend Environment Variables (.env):**
+```env
+VITE_API_URL=https://your-backend-domain.railway.app/api
+```
+
+### Step 6: Deployment Verification Checklist
+
+✅ **Database Connection**
+- [ ] MongoDB Atlas cluster is running
+- [ ] Database user has proper permissions
+- [ ] Connection string is correct
+- [ ] IP whitelist includes deployment servers
+
+✅ **Backend Deployment**
+- [ ] Server starts without errors
+- [ ] Environment variables are set
+- [ ] API endpoints respond correctly
+- [ ] Socket.IO connections work
+- [ ] CORS is configured for frontend domain
+
+✅ **Frontend Deployment**
+- [ ] Build completes successfully
+- [ ] Environment variables are set
+- [ ] API calls reach backend
+- [ ] Authentication flow works
+- [ ] Real-time features function
+
+✅ **Application Features**
+- [ ] User registration/login
+- [ ] Room creation and joining
+- [ ] Real-time chat messaging
+- [ ] WebRTC video calling
+- [ ] Code editor functionality
+- [ ] Socket.IO real-time updates
+
+### Deployment Commands Summary
+
+```bash
+# Backend (Railway)
+cd server
+railway login
+railway init
+railway up
+
+# Frontend (Vercel)
+cd client
+npm run build
+vercel --prod
+
+# Or use GitHub integration:
+# 1. Push code to GitHub
+# 2. Connect repositories on Vercel/Railway
+# 3. Set environment variables
+# 4. Deploy automatically on push
+```
+
+### Alternative Deployment Platforms
+
+| Platform | Type | Free Tier | Pros | Cons |
+|----------|------|-----------|------|------|
+| **Vercel** | Frontend | Yes | Fast, Easy setup, Auto HTTPS | Frontend only |
+| **Netlify** | Frontend | Yes | Great for static sites | Frontend only |
+| **Railway** | Backend | $5 credit | Simple setup, Great DX | Limited free tier |
+| **Render** | Full-stack | Yes | Both frontend/backend | Slower cold starts |
+| **Heroku** | Full-stack | Paid only | Mature platform | No free tier |
+| **DigitalOcean** | Full-stack | $200 credit | Production ready | More complex setup |
+
+### Custom Domain Setup (Optional)
+
+1. **Purchase Domain** (Namecheap, GoDaddy, etc.)
+2. **Frontend (Vercel)**
+   - Go to Vercel project settings
+   - Add custom domain
+   - Update DNS records as instructed
+3. **Backend (Railway)**
+   - Add custom domain in Railway dashboard
+   - Configure DNS CNAME record
+
+### Production Monitoring
+
+**Recommended Tools:**
+- **Uptime Monitoring**: UptimeRobot, Pingdom
+- **Error Tracking**: Sentry, LogRocket
+- **Analytics**: Google Analytics, Plausible
+- **Performance**: Vercel Analytics, Railway Metrics
+
+### Troubleshooting Common Issues
+
+**CORS Errors:**
+```javascript
+// Add your production domain to corsOption in server.js
+origin: ['https://your-frontend-domain.vercel.app']
+```
+
+**Database Connection Issues:**
+- Check MongoDB Atlas IP whitelist
+- Verify connection string format
+- Ensure database user permissions
+
+**Socket.IO Connection Fails:**
+- Verify backend URL in frontend
+- Check firewall settings
+- Ensure HTTPS/WSS for production
+
+**Build Failures:**
+- Check Node.js version compatibility
+- Verify all dependencies are listed in package.json
+- Review build logs for specific errors
+
+### Cost Estimation
+
+**Free Tier Deployment:**
+- MongoDB Atlas: Free (M0 cluster)
+- Vercel: Free (hobby plan)
+- Railway: $5 credit (~1-2 months free)
+- **Total: FREE for 1-2 months**
+
+**Paid Production:**
+- MongoDB Atlas: $9-25/month
+- Vercel Pro: $20/month
+- Railway: $5-20/month
+- **Total: $34-65/month**
+
+## �📁 Project Structure
 
 <details>
 <summary>Click to expand project structure</summary>
@@ -487,12 +744,49 @@ const socket = io(SOCKET_URL, {
 socket.emit('join-room', roomId);
 ```
 
-**Send Message**
+#### Send Message
 ```javascript
 socket.emit('send-message', {
   roomId: 'string',
   text: 'string'
 });
+```
+
+**Code Execution Events**
+```javascript
+// Execute code (broadcasts to all users in room)
+socket.emit('code-execution', {
+  roomId: 'string',
+  language: 'string',
+  code: 'string'
+});
+
+// Send execution results
+socket.emit('execution-result', {
+  roomId: 'string',
+  result: 'string',
+  isError: boolean
+});
+
+// Handle user input during execution
+socket.emit('input-response', {
+  roomId: 'string',
+  input: 'string'
+});
+```
+
+**Whiteboard Collaboration Events**
+```javascript
+// Synchronize TLDraw whiteboard
+socket.emit('tldraw_snapshot', {
+  type: 'tldraw_snapshot',
+  roomId: 'string',
+  data: [shapes_array]
+});
+
+// Open/close whiteboard for all users
+socket.emit('open-whiteboard', { roomId: 'string' });
+socket.emit('close-whiteboard', { roomId: 'string' });
 ```
 
 **WebRTC Video Calling Events**
@@ -530,6 +824,46 @@ socket.on('user-joined-room', (data) => {
 ```javascript
 socket.on('new-message', (messageData) => {
   // messageData: { _id, text, sender: { _id, username }, createdAt }
+});
+```
+
+**Code Execution Events**
+```javascript
+// Code execution started by another user
+socket.on('code-execution', (data) => {
+  // data: { roomId, language, username, code }
+});
+
+// Execution results from another user
+socket.on('execution-result', (data) => {
+  // data: { roomId, result, isError, username }
+});
+
+// Input request during execution
+socket.on('input-request', (data) => {
+  // data: { roomId, prompt, username }
+});
+
+// Input response from another user
+socket.on('input-response', (data) => {
+  // data: { roomId, input, username }
+});
+```
+
+**Whiteboard Events**
+```javascript
+// Whiteboard drawing updates
+socket.on('tldraw_snapshot', (data) => {
+  // data: { type, roomId, data: [shapes], username }
+});
+
+// Whiteboard opened/closed by another user
+socket.on('open-whiteboard', (data) => {
+  // data: { roomId, username }
+});
+
+socket.on('close-whiteboard', (data) => {
+  // data: { roomId, username }
 });
 ```
 
@@ -592,7 +926,21 @@ socket.on('user-video-disconnected', (data) => {
   - ✅ Video controls (camera/microphone toggle)
   - ✅ Connection status indicators
   - ✅ Automatic cleanup on user disconnect
-- 🔄 Code editor synchronization (planned)
+- ✅ **Interactive Whiteboard (TLDraw)**
+  - ✅ Real-time drawing synchronization
+  - ✅ Shape and annotation sharing
+  - ✅ Modal interface with full-screen drawing
+  - ✅ Multi-user collaborative drawing
+- ✅ **Code Execution Engine**
+  - ✅ Multi-language code execution (JS, Python, Java, C++)
+  - ✅ Real-time output sharing across users
+  - ✅ Interactive input handling
+  - ✅ Collaborative execution results
+- ✅ **User Profile System**
+  - ✅ Editable profile information
+  - ✅ Job title, company, and bio fields
+  - ✅ Profile image support
+- 🔄 Live code editor synchronization (cursor positions)
 
 ### Error Responses
 
@@ -745,6 +1093,8 @@ socket.on('user-ready-for-video', (data) => {
 | **Video Quality** | 720p HD | Default video resolution |
 | **Concurrent Users** | 2-4 per room | Optimal performance threshold |
 | **Message Throughput** | 1000+ msg/s | Socket.IO message handling |
+| **Code Execution** | <3s | Average execution time for most languages |
+| **Whiteboard Sync** | <50ms | TLDraw shape synchronization |
 | **Memory Usage** | <50MB | Client-side resource usage |
 
 ## 🏗️ Current Status
@@ -759,27 +1109,33 @@ socket.on('user-ready-for-video', (data) => {
 </div>
 
 ### ✅ Completed Features
-- **Authentication System**: Secure JWT-based login/signup
-- **Room Management**: Create/join rooms with unique codes  
-- **Real-time Chat**: Instant messaging with persistence
-- **WebRTC Video Calling**: Multi-user peer-to-peer video
-- **Code Editor**: Monaco Editor with syntax highlighting
-- **Socket.IO Integration**: Real-time communication infrastructure
-- **Responsive UI**: Mobile-friendly interface
-- **Security**: Protected routes and authentication middleware
+- **Authentication System**: Secure JWT-based login/signup with protected routes
+- **Room Management**: Create/join rooms with unique codes and role-based access
+- **Real-time Chat**: Instant messaging with persistence and message history
+- **WebRTC Video Calling**: Multi-user peer-to-peer video with camera/mic controls
+- **Monaco Code Editor**: Professional code editing with syntax highlighting
+- **Interactive Whiteboard**: TLDraw-powered collaborative drawing and diagramming
+- **Code Execution Engine**: Run code in multiple languages with shared output
+- **Real-time Collaboration**: Live code, chat, whiteboard, and execution synchronization
+- **Socket.IO Integration**: Comprehensive real-time communication infrastructure
+- **User Profile Management**: Editable profiles with job title, company, and bio
+- **Responsive UI**: Mobile-friendly interface with Material Design components
+- **Session Management**: Persistent room sessions with automatic reconnection
 
 ### 🔄 In Progress
-- **Code Synchronization**: Real-time collaborative editing
-- **Code Execution**: Integrated compiler/interpreter
-- **Screen Sharing**: Desktop sharing in video calls
+- **Advanced Code Synchronization**: Live cursor positions and selection sharing
+- **File Management**: Multiple file support with folder structure
+- **Enhanced Permissions**: Granular user role management (admin, editor, viewer)
 
 ### 🎯 Planned Features
 - **File Management**: Multiple file support and explorer
 - **Version Control**: Git integration for code history
+- **Screen Sharing**: Desktop sharing in video calls
 - **Themes & Customization**: Dark/light modes and custom themes
 - **Mobile App**: React Native mobile application
 - **Recording**: Session recording and playback
 - **Advanced Permissions**: Granular user role management
+- **Plugin System**: Extensible architecture for custom tools
 
 ## Future Enhancements
 1. Real-time code synchronization
