@@ -56,12 +56,22 @@ const CodeEditor = () => {
       setcode(data.code);
     });
 
+    // Whiteboard synchronization
+    socket.on('open-whiteboard', (data) => {
+      console.log('📥 Received open whiteboard from:', data.username);
+      setIsDoodleOpen(true);
+    });
+
+    socket.on('close-whiteboard', (data) => {
+      console.log('📥 Received close whiteboard from:', data.username);
+      setIsDoodleOpen(false);
+    });
+
     return () => {
       socket.disconnect();
     };
   }, [roomId, token]);
 
-  // Update Monaco Editor language when language state changes
   useEffect(() => {
     if (editorRef.current) {
       const model = editorRef.current.getModel();
@@ -141,7 +151,13 @@ const CodeEditor = () => {
             <span className="text-sm font-semibold">Run Code</span>
           </button>
           <button 
-            onClick={() => setIsDoodleOpen(true)}
+            onClick={() => {
+              setIsDoodleOpen(true);
+              // Notify other users that whiteboard is opening
+              if (socketRef.current && socketRef.current.connected) {
+                socketRef.current.emit('open-whiteboard', { roomId });
+              }
+            }}
             className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-2.5 text-white font-medium shadow-lg hover:from-blue-600 hover:to-blue-700 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 ease-in-out"
           >
             <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform duration-200">draw</span>
@@ -195,6 +211,8 @@ const CodeEditor = () => {
       <DoodleModal 
         isOpen={isDoodleOpen}
         onClose={() => setIsDoodleOpen(false)}
+        roomId={roomId}
+        socketRef={socketRef}
       />
     </div>
   );

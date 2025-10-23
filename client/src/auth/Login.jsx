@@ -170,7 +170,7 @@ const Login = () => {
                 className="w-full rounded-lg bg-black py-3 text-sm font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 type="submit"
               >
-                Sign in
+                Login
               </button>
             </form>
 

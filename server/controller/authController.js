@@ -42,9 +42,26 @@ export const login=async(req,res)=>{
         return res.status(400).json({message:"Inavlid Credential"});
     }
     const token=generateToken(user._id);
-    res.status(200).json({token,user:{id:user._id,username:user.username,email:user.email,message:"Login Successfull"}});
+    res.cookie('authToken',token,{
+        httpOnly:true,
+        secure:process.env.NODE_ENV==="production",
+        sameSite:"strict",
+        maxAge:15*60*1000, // 15 minutes in milliseconds
+    })
+     return res.status(200).json({token,user:{id:user._id,username:user.username,email:user.email,message:"Login Successfull"}});
     }catch(err){
         console.log(err);
         res.status(500).json({error:err.message})
     }
 };
+export const logout=async(req,res)=>{
+    try{
+
+        res.clearCookie('authToken');
+        return res.status(200).json({message:"Logout Successfull"});
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({message:"Server Error"});
+    }
+}

@@ -208,6 +208,41 @@ export function setupSocket(server) {
                 username: socket.username
             });
         });
+
+        // Tldraw whiteboard collaboration - using snapshots
+        socket.on('tldraw_snapshot', (data) => {
+            console.log(`Tldraw snapshot from ${socket.username} in room: ${data.roomId}`);
+            
+            // Add user info to the message
+            const messageWithUser = {
+                ...data,
+                userId: socket.userId,
+                username: socket.username,
+                timestamp: Date.now()
+            };
+
+            // Broadcast to other users in the same room
+            socket.to(data.roomId).emit('tldraw_snapshot', messageWithUser);
+        });
+
+        // Whiteboard modal synchronization
+        socket.on('open-whiteboard', (data) => {
+            console.log(`Whiteboard opened by ${socket.username} in room: ${data.roomId}`);
+            socket.to(data.roomId).emit('open-whiteboard', {
+                roomId: data.roomId,
+                userId: socket.userId,
+                username: socket.username
+            });
+        });
+
+        socket.on('close-whiteboard', (data) => {
+            console.log(`Whiteboard closed by ${socket.username} in room: ${data.roomId}`);
+            socket.to(data.roomId).emit('close-whiteboard', {
+                roomId: data.roomId,
+                userId: socket.userId,
+                username: socket.username
+            });
+        });
   
     });
 

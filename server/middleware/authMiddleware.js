@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 
 export const auth=(req,res,next)=>{
     try{
-        const token= req.header("Authorization")?.replace("Bearer ","");
+        const token= req.cookies.authToken;
         console.log(`Auth middleware: token=${token ? 'exists' : 'missing'}`);
         
         if (!token) {

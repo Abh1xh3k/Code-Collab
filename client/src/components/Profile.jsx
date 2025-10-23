@@ -34,11 +34,12 @@ const ProfileEdit = () => {
         return;
       }
 
-      const response = await axios.put("/api/user/profile", profileUpdateData, {
+      const response = await axios.get("/api/user/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        withCredentials: true,
       });
 
       const userData = response.data;
@@ -158,6 +159,7 @@ const ProfileEdit = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        withCredentials: true,
       });
 
       if (response.status === 200) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import RoomCreatedModal from '../components/RoomCreatedModal';
 import axios from 'axios';
@@ -8,6 +8,22 @@ const Room = () => {
   const [mode, setMode] = useState('create'); // 'create' or 'join'
   const [showModal, setShowModal] = useState(false);
   const [createdRoomData, setCreatedRoomData] = useState(null);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const [createData, setCreateData] = useState({
     name: '',
@@ -142,6 +158,33 @@ const Room = () => {
     }
   };
 
+  const handleProfileClick = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleProfileOption = () => {
+    setShowProfileDropdown(false);
+    navigate('/profile');
+  };
+
+  const handleLogout = async () => {
+    setShowProfileDropdown(false);
+    try {
+      // Clear server-side cookie
+      await axios.post("/api/auth/logout", {}, {
+        withCredentials: true
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear client-side localStorage
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentRoomId');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      navigate('/login');
+    }
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -164,12 +207,37 @@ const Room = () => {
             <span className="material-symbols-outlined text-gray-500 hover:text-gray-800 transition-colors">notifications</span>
             <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
           </button>
-          <div
-            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
-            style={{
-              backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuCJ6qfLxUn-IJAcVFSG8dRRYBZzFGeM-XgRgYC4EkaHmjJaZufe0D-6ZMNirC-x-BrAjbH6_yNcg8-rGw9nqZI0Zz1u1ah-BdXa-CjIHyUJ3n96UDJlmrSNR819r7mqPFw_Xoe9dOodfI6PgxmuBXcDKAvvvjiAWDc18LFFmFgvTDQPdZjHMd_voY88Xti7ENiPBDsymL1GpfHTdOoWwe5EmYZAF8mhlI_YQI2XrpGEfVE7Y6U3IvZ_yL8gebxZcvA7EuHcYCjZuZE")`
-            }}
-          ></div>
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={handleProfileClick}
+              className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 hover:ring-2 hover:ring-gray-300 transition-all duration-200 cursor-pointer"
+              style={{
+                backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuCJ6qfLxUn-IJAcVFSG8dRRYBZzFGeM-XgRgYC4EkaHmjJaZufe0D-6ZMNirC-x-BrAjbH6_yNcg8-rGw9nqZI0Zz1u1ah-BdXa-CjIHyUJ3n96UDJlmrSNR819r7mqPFw_Xoe9dOodfI6PgxmuBXcDKAvvvjiAWDc18LFFmFgvTDQPdZjHMd_voY88Xti7ENiPBDsymL1GpfHTdOoWwe5EmYZAF8mhlI_YQI2XrpGEfVE7Y6U3IvZ_yL8gebxZcvA7EuHcYCjZuZE")`
+              }}
+            ></button>
+            
+            {/* Dropdown Menu */}
+            {showProfileDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                <div className="py-1">
+                  <button
+                    onClick={handleProfileOption}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-gray-400 mr-3">person</span>
+                    Profile
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-gray-400 mr-3">logout</span>
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

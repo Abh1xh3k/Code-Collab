@@ -522,6 +522,7 @@ const ChatBox = () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/chat/getMessage/${roomId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
+          withCredentials: true,
         });
 
         let rawList = Array.isArray(res.data) ? res.data :
