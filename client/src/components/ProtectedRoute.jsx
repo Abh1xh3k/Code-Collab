@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../Constants';
 
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // null = checking, true = authenticated, false = not authenticated
@@ -18,7 +19,7 @@ const ProtectedRoute = ({ children }) => {
         }
 
         // Verify token with server
-        await axios.get('/api/user/profile', {
+        await axios.get(`${API_BASE_URL}/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

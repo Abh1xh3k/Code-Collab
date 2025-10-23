@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import {API_BASE_URL} from '../Constants.js';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const Signup = () => {
     setError('');
     console.log('Sending data:', user);
     try {
-      const res = await axios.post("/api/auth/signup", user, {
+      const res = await axios.post(`${API_BASE_URL}/auth/signup`, user, {
         headers: {
           "Content-Type": "application/json",
         },

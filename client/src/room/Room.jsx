@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import RoomCreatedModal from '../components/RoomCreatedModal';
+import {API_BASE_URL} from '../Constants.js';
 import axios from 'axios';
 const Room = () => {
 
@@ -66,7 +67,7 @@ const Room = () => {
         return;
       }
 
-      const res = await axios.post("/api/room/create", createData, {
+      const res = await axios.post(`${API_BASE_URL}/room/create`, createData, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -120,7 +121,7 @@ const Room = () => {
         return;
       }
 
-      const res = await axios.post("/api/room/join", joinData, {
+      const res = await axios.post(`${API_BASE_URL}/room/join`, joinData, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -171,7 +172,7 @@ const Room = () => {
     setShowProfileDropdown(false);
     try {
       // Clear server-side cookie
-      await axios.post("/api/auth/logout", {}, {
+      await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
         withCredentials: true
       });
     } catch (error) {

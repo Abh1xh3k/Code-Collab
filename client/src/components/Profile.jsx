@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import {API_BASE_URL} from '../Constants.js';
 
 const ProfileEdit = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const ProfileEdit = () => {
         return;
       }
 
-      const response = await axios.get("/api/user/profile", {
+      const response = await axios.get(`${API_BASE_URL}/user/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -154,7 +155,7 @@ const ProfileEdit = () => {
         toast.info('Name and email updates will be available in a future update');
       }
 
-      const response = await axios.put("/api/user/profile", profileUpdateData, {
+      const response = await axios.put(`${API_BASE_URL}/user/profile`, profileUpdateData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
