@@ -1,41 +1,26 @@
-import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import axios from 'axios';
-import { API_BASE_URL } from '../Constants';
+import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import axios from "axios";
+import { API_BASE_URL } from "../Constants";
 
 const ProtectedRoute = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // null = checking, true = authenticated, false = not authenticated
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('authToken');
-        
-        if (!token) {
-          setIsAuthenticated(false);
-          setLoading(false);
-          return;
-        }
-
-        // Verify token with server
         await axios.get(`${API_BASE_URL}/user/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          withCredentials: true
+          withCredentials: true,
         });
-        
         setIsAuthenticated(true);
       } catch (error) {
-        console.log('Auth check failed:', error);
-        // Clear invalid token
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentRoomId');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('username');
+        console.log("Auth check failed:", error);
         setIsAuthenticated(false);
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("currentRoomId");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("username");
       } finally {
         setLoading(false);
       }

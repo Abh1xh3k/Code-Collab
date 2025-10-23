@@ -45,7 +45,7 @@ export const login=async(req,res)=>{
     res.cookie('authToken',token,{
         httpOnly:true,
         secure:process.env.NODE_ENV==="production",
-        sameSite:"strict",
+        sameSite:"None",
         maxAge:15*60*1000, // 15 minutes in milliseconds
     })
      return res.status(200).json({token,user:{id:user._id,username:user.username,email:user.email,message:"Login Successfull"}});
