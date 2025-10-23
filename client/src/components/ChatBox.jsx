@@ -17,7 +17,7 @@ const ChatBox = () => {
   const [connectionCount, setConnectionCount] = useState(0);
   const [localVideoReady, setLocalVideoReady] = useState(false);
 
-  // Refs for persistent values
+ 
   const socketRef = useRef(null);
   const localStreamRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -158,9 +158,40 @@ const ChatBox = () => {
 
       const pc = new RTCPeerConnection({
         iceServers: [
+          // STUN servers for NAT discovery
           { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
+          
+          // Free TURN servers for NAT traversal (cross-network connectivity)
+          {
+            urls: 'turn:openrelay.metered.ca:80',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: 'turn:openrelay.metered.ca:443',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          
+          // Additional TURN servers for redundancy
+          {
+            urls: 'turn:relay1.expressturn.com:3478',
+            username: 'efTKCGIYOPJAR4OWPQ',
+            credential: 'PdIEBYrTqpyVVcBBJa'
+          }
+        ],
+        iceCandidatePoolSize: 10,
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
       });
 
       const localStream = localStreamRef.current;
@@ -173,7 +204,6 @@ const ChatBox = () => {
         console.error('No local stream available when creating peer connection');
       }
 
-      // Handle incoming remote stream
       pc.ontrack = (event) => {
         console.log(`Received remote ${event.track.kind} track from ${targetUsername}`);
         const remoteStream = event.streams[0];
@@ -195,7 +225,7 @@ const ChatBox = () => {
         }, 100);
       };
 
-      // Handle ICE candidates
+
       pc.onicecandidate = (event) => {
         if (event.candidate && socketRef.current) {
           console.log(`Sending ICE candidate to ${targetUsername}`);
@@ -212,15 +242,27 @@ const ChatBox = () => {
         setConnectionCount(Object.keys(peerConnectionsRef.current).length);
 
         if (pc.connectionState === 'connected') {
-          console.log(`Successfully connected to ${targetUsername}`);
+          console.log(`✅ Successfully connected to ${targetUsername}`);
         } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-          console.log(`Connection ${pc.connectionState} for ${targetUsername}`);
+          console.log(`❌ Connection ${pc.connectionState} for ${targetUsername}`);
           setTimeout(() => cleanupPeerConnection(targetUserId), 1000);
         }
       };
 
       pc.oniceconnectionstatechange = () => {
         console.log(`ICE connection state for ${targetUsername}:`, pc.iceConnectionState);
+        
+        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+          console.log(`🔗 ICE connection established with ${targetUsername}`);
+        } else if (pc.iceConnectionState === 'failed') {
+          console.error(`🚫 ICE connection failed with ${targetUsername} - TURN server might be needed`);
+        } else if (pc.iceConnectionState === 'disconnected') {
+          console.warn(`⚠️ ICE connection disconnected with ${targetUsername}`);
+        }
+      };
+
+      pc.onicegatheringstatechange = () => {
+        console.log(`ICE gathering state for ${targetUsername}:`, pc.iceGatheringState);
       };
 
       peerConnectionsRef.current[targetUserId] = pc;
@@ -255,7 +297,6 @@ const ChatBox = () => {
         console.error(`Error creating offer for ${targetUsername}:`, err);
       }
     };
-
     const handleOffer = async (data) => {
       try {
         console.log(`Handling offer from ${data.callerName}`);
@@ -269,12 +310,13 @@ const ChatBox = () => {
         await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
         console.log('Remote description set (offer)');
 
-        // Process pending ICE candidates
         if (pendingIceCandidatesRef.current[data.callerId]) {
-          console.log(`Processing ${pendingIceCandidatesRef.current[data.callerId].length} pending candidates`);
-          for (const candidate of pendingIceCandidatesRef.current[data.callerId]) {
+          console.log(`Processing ${pendingIceCandidatesRef.current[data.callerId].length} pending candidates for ${data.callerName}`);
+          for (const candidateData of pendingIceCandidatesRef.current[data.callerId]) {
             try {
+              const candidate = new RTCIceCandidate(candidateData);
               await pc.addIceCandidate(candidate);
+              console.log(`Added queued ICE candidate for ${data.callerName}`);
             } catch (err) {
               console.warn('Error adding queued candidate:', err);
             }
@@ -314,10 +356,12 @@ const ChatBox = () => {
 
         // Process pending ICE candidates
         if (pendingIceCandidatesRef.current[data.answererId]) {
-
-          for (const candidate of pendingIceCandidatesRef.current[data.answererId]) {
+          console.log(`Processing ${pendingIceCandidatesRef.current[data.answererId].length} pending ICE candidates for ${data.answererName}`);
+          for (const candidateData of pendingIceCandidatesRef.current[data.answererId]) {
             try {
+              const candidate = new RTCIceCandidate(candidateData);
               await pc.addIceCandidate(candidate);
+              console.log(`Added queued ICE candidate for ${data.answererName}`);
             } catch (err) {
               console.warn('Error adding queued candidate:', err);
             }
@@ -331,28 +375,36 @@ const ChatBox = () => {
 
     const handleIceCandidate = async (data) => {
       try {
+        console.log(`Received ICE candidate from ${data.senderId}`);
         const pc = peerConnectionsRef.current[data.senderId];
 
         if (!pc) {
-   
+          console.log(`No peer connection for ${data.senderId}, storing candidate for later`);
           if (!pendingIceCandidatesRef.current[data.senderId]) {
             pendingIceCandidatesRef.current[data.senderId] = [];
           }
-          pendingIceCandidatesRef.current[data.senderId].push(new RTCIceCandidate(data.candidate));
+          pendingIceCandidatesRef.current[data.senderId].push(data.candidate);
           return;
         }
 
         if (!pc.remoteDescription) {
+          console.log(`No remote description yet, storing candidate for ${data.senderId}`);
           if (!pendingIceCandidatesRef.current[data.senderId]) {
             pendingIceCandidatesRef.current[data.senderId] = [];
           }
-          pendingIceCandidatesRef.current[data.senderId].push(new RTCIceCandidate(data.candidate));
+          pendingIceCandidatesRef.current[data.senderId].push(data.candidate);
           return;
         }
 
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        // Add the ICE candidate
+        const candidate = new RTCIceCandidate(data.candidate);
+        await pc.addIceCandidate(candidate);
+        console.log(`Successfully added ICE candidate from ${data.senderId}`);
+        
       } catch (err) {
         console.error('Error adding ICE candidate:', err);
+        // Don't fail the entire connection for a single bad candidate
+        console.log('Continuing despite ICE candidate error...');
       }
     };
 
