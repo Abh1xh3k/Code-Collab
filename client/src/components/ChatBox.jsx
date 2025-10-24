@@ -239,6 +239,14 @@ const ChatBox = () => {
         console.log(`ICE gathering state for ${targetUsername}:`, pc.iceGatheringState);
       };
 
+      pc.onicecandidateerror = (event) => {
+        console.error(`❌ ICE candidate error for ${targetUsername}:`, {
+          errorCode: event.errorCode,
+          errorText: event.errorText,
+          url: event.url
+        });
+      };
+
       peerConnectionsRef.current[targetUserId] = pc;
       setConnectionCount(Object.keys(peerConnectionsRef.current).length);
 
