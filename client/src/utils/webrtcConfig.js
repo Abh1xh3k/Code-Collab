@@ -11,29 +11,38 @@ export const getWebRTCConfig = () => {
     ],
     iceCandidatePoolSize: 10,
     bundlePolicy: 'max-bundle',
-    rtcpMuxPolicy: 'require'
+    rtcpMuxPolicy: 'require',
+    iceTransportPolicy: isProduction ? 'relay' : 'all' // Force TURN in production
   };
 
   if (isProduction) {
-    // Production TURN servers (HTTPS compatible)
+    // Production TURN servers (HTTPS compatible) - Multiple reliable options
     baseConfig.iceServers.push(
+      // Metered TURN (most reliable free option)
+      {
+        urls: 'turns:relay1.expressturn.com:443',
+        username: 'ef3CRVJKR3L5XC8MWX',
+        credential: 'wwZ8gCJXinuqEdGU1T'
+      },
+      {
+        urls: 'turn:relay1.expressturn.com:3478',
+        username: 'ef3CRVJKR3L5XC8MWX',
+        credential: 'wwZ8gCJXinuqEdGU1T'
+      },
+      // Backup TURN servers
       {
         urls: 'turns:openrelay.metered.ca:443',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
       {
-        urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+        urls: 'turn:openrelay.metered.ca:80',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
+      // Additional backup
       {
         urls: 'turn:numb.viagenie.ca:3478',
-        username: 'webrtc@live.com',
-        credential: 'muazkh'
-      },
-      {
-        urls: 'turns:numb.viagenie.ca:5349',
         username: 'webrtc@live.com',
         credential: 'muazkh'
       }

@@ -193,12 +193,19 @@ const ChatBox = () => {
 
       pc.onicecandidate = (event) => {
         if (event.candidate && socketRef.current) {
-          console.log(`Sending ICE candidate to ${targetUsername}`);
+          console.log(`📤 Sending ICE candidate to ${targetUsername}:`, {
+            type: event.candidate.type,
+            protocol: event.candidate.protocol,
+            address: event.candidate.address,
+            port: event.candidate.port
+          });
           socketRef.current.emit('ice-candidate', {
             candidate: event.candidate,
             targetUserId,
             roomId
           });
+        } else if (!event.candidate) {
+          console.log(`🏁 ICE gathering completed for ${targetUsername}`);
         }
       };
 
