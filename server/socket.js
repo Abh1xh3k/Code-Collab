@@ -8,10 +8,10 @@ export function setupSocket(server) {
         cors: {
             origin: [
                 "http://localhost:5173",
-                "http://172.20.10.4/:5173", // Replace with your computer's IP
-                'http://30.10.38.51:5173',
                 'https://praiseworthy-unlarge-jerry.ngrok-free.dev',
-                'https://code-collab-three-smoky.vercel.app' ,// Your ngrok domain
+                'https://code-collab-three-smoky.vercel.app',
+                "https://code-collab-git-main-abhis-projects-82b05815.vercel.app", 
+                "https://code-collab-90z00scxa-abhis-projects-82b05815.vercel.app",
             ],
             methods: ["GET", "POST"],
             credentials: true,
@@ -44,7 +44,7 @@ export function setupSocket(server) {
 
 
         socket.on('join-room', (roomId) => {
-           
+
 
             socket.join(roomId);
             socket.currentRoomId = roomId;
@@ -61,7 +61,7 @@ export function setupSocket(server) {
                 username: socket.username,
                 roomId: roomId
             });
-        console.log(`Broadcasted join notification to other users in room ${roomId}`);
+            console.log(`Broadcasted join notification to other users in room ${roomId}`);
         });
         socket.on('disconnect', () => {
             console.log(`${socket.username} disconnected from socket (Socket ID: ${socket.id})`);
@@ -142,9 +142,9 @@ export function setupSocket(server) {
             });
         });
 
-        socket.on('code-change',({roomId,code})=>{
+        socket.on('code-change', ({ roomId, code }) => {
             console.log("Code change received:", { roomId, codeLength: code?.length });
-            socket.to(roomId).emit("codeUpdate",code);
+            socket.to(roomId).emit("codeUpdate", code);
         });
 
         socket.on('language-change', (data) => {
@@ -213,7 +213,7 @@ export function setupSocket(server) {
         // Tldraw whiteboard collaboration - using snapshots
         socket.on('tldraw_snapshot', (data) => {
             console.log(`Tldraw snapshot from ${socket.username} in room: ${data.roomId}`);
-            
+
             // Add user info to the message
             const messageWithUser = {
                 ...data,
@@ -244,7 +244,7 @@ export function setupSocket(server) {
                 username: socket.username
             });
         });
-  
+
     });
 
     return io;

@@ -3,6 +3,7 @@ import axios from "axios";
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import { API_BASE_URL, SOCKET_URL } from '../Constants';
+import getWebRTCConfig from '../utils/webrtcConfig';
 
 const ChatBox = () => {
   const [message, setMessage] = useState("");
@@ -156,43 +157,7 @@ const ChatBox = () => {
         peerConnectionsRef.current[targetUserId].close();
       }
 
-      const pc = new RTCPeerConnection({
-        iceServers: [
-          // STUN servers for NAT discovery
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
-          
-          // Free TURN servers for NAT traversal (cross-network connectivity)
-          {
-            urls: 'turn:openrelay.metered.ca:80',
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
-          },
-          {
-            urls: 'turn:openrelay.metered.ca:443',
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
-          },
-          {
-            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
-          },
-          
-          // Additional TURN servers for redundancy
-          {
-            urls: 'turn:relay1.expressturn.com:3478',
-            username: 'efTKCGIYOPJAR4OWPQ',
-            credential: 'PdIEBYrTqpyVVcBBJa'
-          }
-        ],
-        iceCandidatePoolSize: 10,
-        bundlePolicy: 'max-bundle',
-        rtcpMuxPolicy: 'require'
-      });
+      const pc = new RTCPeerConnection(getWebRTCConfig());
 
       const localStream = localStreamRef.current;
       if (localStream) {
@@ -256,6 +221,8 @@ const ChatBox = () => {
           console.log(`🔗 ICE connection established with ${targetUsername}`);
         } else if (pc.iceConnectionState === 'failed') {
           console.error(`🚫 ICE connection failed with ${targetUsername} - TURN server might be needed`);
+          console.error('Check chrome://webrtc-internals/ for detailed connection info');
+          setError(`Video connection failed with ${targetUsername}. Please refresh and try again.`);
         } else if (pc.iceConnectionState === 'disconnected') {
           console.warn(`⚠️ ICE connection disconnected with ${targetUsername}`);
         }
