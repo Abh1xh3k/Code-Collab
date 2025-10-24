@@ -10,7 +10,8 @@ export function setupSocket(server) {
                 "http://localhost:5173",
                 "http://172.20.10.4/:5173", // Replace with your computer's IP
                 'http://30.10.38.51:5173',
-                'https://praiseworthy-unlarge-jerry.ngrok-free.dev', // Your ngrok domain
+                'https://praiseworthy-unlarge-jerry.ngrok-free.dev',
+                'https://code-collab-three-smoky.vercel.app' ,// Your ngrok domain
             ],
             methods: ["GET", "POST"],
             credentials: true,
