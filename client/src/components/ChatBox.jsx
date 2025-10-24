@@ -229,7 +229,15 @@ const ChatBox = () => {
         } else if (pc.iceConnectionState === 'failed') {
           console.error(`🚫 ICE connection failed with ${targetUsername} - TURN server might be needed`);
           console.error('Check chrome://webrtc-internals/ for detailed connection info');
-          setError(`Video connection failed with ${targetUsername}. Please refresh and try again.`);
+          setError(`Video connection failed with ${targetUsername}. This may be due to network restrictions.`);
+          
+          // Try ICE restart as fallback
+          console.log(`🔄 Attempting ICE restart for ${targetUsername}...`);
+          try {
+            pc.restartIce();
+          } catch (err) {
+            console.warn('ICE restart failed:', err);
+          }
         } else if (pc.iceConnectionState === 'disconnected') {
           console.warn(`⚠️ ICE connection disconnected with ${targetUsername}`);
         }

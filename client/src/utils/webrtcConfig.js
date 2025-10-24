@@ -16,24 +16,20 @@ export const getWebRTCConfig = () => {
   };
 
   if (isProduction) {
-    // Production - Use working TURN servers with fallback to STUN
+    // Production - Use Google's free STUN + reliable fallback TURN
     baseConfig.iceServers.push(
-      // Working TURN servers (tested)
+      // Google's additional STUN servers
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' },
+      
+      // Temporarily remove problematic TURN servers for testing
+      // Will need proper TURN service for cross-network video calls
+      
+      // Simple fallback - this may work for some network configurations
       {
-        urls: 'turn:numb.viagenie.ca:3478',
-        username: 'webrtc@live.com',
-        credential: 'muazkh'
-      },
-      {
-        urls: 'turns:numb.viagenie.ca:5349',
-        username: 'webrtc@live.com',
-        credential: 'muazkh'
-      },
-      // Backup option
-      {
-        urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
-        username: 'webrtc',
-        credential: 'webrtc'
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
       }
     );
   } else {
