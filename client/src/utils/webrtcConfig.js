@@ -4,7 +4,7 @@ export const getWebRTCConfig = () => {
   
   const baseConfig = {
     iceServers: [
-      // STUN servers (always include these)
+      // Always include basic STUN servers
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
@@ -12,28 +12,49 @@ export const getWebRTCConfig = () => {
     iceCandidatePoolSize: 10,
     bundlePolicy: 'max-bundle',
     rtcpMuxPolicy: 'require'
-    // Removed iceTransportPolicy - let WebRTC choose best connection method
   };
 
   if (isProduction) {
-    // Production - Use Google's free STUN + reliable fallback TURN
+    // Production STUN + TURN servers
     baseConfig.iceServers.push(
-      // Google's additional STUN servers
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
-      
-      // Temporarily remove problematic TURN servers for testing
-      // Will need proper TURN service for cross-network video calls
-      
-      // Simple fallback - this may work for some network configurations
+
+      // TURN servers
       {
         urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject', 
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:relay.backups.cz',
+        username: 'webrtc',
+        credential: 'webrtc'
+      },
+      {
+        urls: 'turn:relay.backups.cz:3478',
+        username: 'webrtc',
+        credential: 'webrtc'
+      },
+      // Additional reliable fallback
+      {
+        urls: 'turn:global.relay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:global.relay.metered.ca:443',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       }
     );
   } else {
-    // Development TURN servers (can use HTTP)
+    // Development TURN servers (HTTP/less strict)
     baseConfig.iceServers.push(
       {
         urls: 'turn:openrelay.metered.ca:80',
