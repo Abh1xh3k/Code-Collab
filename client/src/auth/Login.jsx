@@ -31,15 +31,25 @@ const Login = () => {
       });
 
 
+      console.log('Login response:', res.data);
+      
       if (res.data.token) {
         localStorage.setItem('authToken', res.data.token);
+        console.log('Token stored in localStorage:', res.data.token.substring(0, 20) + '...');
       }
       if (res.data.user && res.data.user.id) {
         localStorage.setItem('userId', res.data.user.id);
+        console.log('UserId stored:', res.data.user.id);
       }
       if (res.data.user && res.data.user.username) {
         localStorage.setItem('username', res.data.user.username);
+        console.log('Username stored:', res.data.user.username);
       }
+      
+      // Verify the token was stored correctly
+      const storedToken = localStorage.getItem('authToken');
+      console.log('Verification - Token in localStorage:', storedToken ? 'Present' : 'Missing');
+      
       toast.success('Successfully logged in! Redirecting...', {
         duration: 2000,
         position: 'top-center',
@@ -49,9 +59,12 @@ const Login = () => {
         },
         icon: '✅',
       });
+      
+      // Longer delay to ensure localStorage is set and page has time to process
       setTimeout(() => {
+        console.log('Navigating to /room...');
         navigate('/room');
-      }, 1000);
+      }, 2000);
     } catch (err) {
       console.log('Full error:', err);
 

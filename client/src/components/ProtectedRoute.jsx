@@ -9,34 +9,64 @@ const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('🔍 ProtectedRoute: Starting authentication check...');
+      
       try {
         const token = localStorage.getItem('authToken');
+        const userId = localStorage.getItem('userId');
+        const username = localStorage.getItem('username');
+        
+        console.log('📝 ProtectedRoute: localStorage contents:', {
+          token: token ? `${token.substring(0, 20)}...` : 'Missing',
+          userId: userId || 'Missing',
+          username: username || 'Missing'
+        });
         
         if (!token) {
+          console.log('❌ ProtectedRoute: No token found in localStorage');
           setIsAuthenticated(false);
           setLoading(false);
           return;
         }
 
-        // Verify token with server
-        await axios.get(`${API_BASE_URL}/user/profile`, {
+        console.log('🔄 ProtectedRoute: Verifying token with server...');
+        // Add timeout to the request
+        const response = await axios.get(`${API_BASE_URL}/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          withCredentials: true
+          withCredentials: true,
+          timeout: 10000 // 10 second timeout
         });
         
+        console.log('✅ ProtectedRoute: Token verification successful!', response.data);
         setIsAuthenticated(true);
       } catch (error) {
-        console.log('Auth check failed:', error);
-        // Clear invalid token
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentRoomId');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('username');
+        console.log('❌ ProtectedRoute: Auth check failed!');
+        console.log('Error details:', {
+          message: error.message,
+          status: error?.response?.status,
+          data: error?.response?.data,
+          url: error?.config?.url
+        });
+        
+        // If token is invalid or expired, clear storage
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+          console.log('🧹 ProtectedRoute: Token expired or invalid, clearing storage');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('currentRoomId');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('username');
+        } else if (error.code === 'ECONNABORTED') {
+          console.log('⏰ ProtectedRoute: Request timeout - server may be slow');
+        } else {
+          console.log('🌐 ProtectedRoute: Network or server error');
+        }
+        
         setIsAuthenticated(false);
       } finally {
+        console.log('🏁 ProtectedRoute: Auth check completed');
         setLoading(false);
       }
     };
