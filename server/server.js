@@ -10,9 +10,22 @@ import userRoutes from './routes/userRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
+import passport from './config/passport.js';
+import session from 'express-session';
 
 const app = express();
 const server = http.createServer(app);
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie:{
+        secure:process.env.NODE_ENV==="production",
+        maxAge:7*24*60*60*1000,
+    }
+}))
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Setup Socket.IO
 const io = setupSocket(server);

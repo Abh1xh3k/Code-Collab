@@ -61,7 +61,7 @@ const ProtectedRoute = ({ children }) => {
         } else if (error.code === 'ECONNABORTED') {
           console.log('⏰ ProtectedRoute: Request timeout - server may be slow');
         } else {
-          console.log('🌐 ProtectedRoute: Network or server error');
+          console.log('🌐 ProtectedRoute: Network or server error', error);
         }
         
         setIsAuthenticated(false);

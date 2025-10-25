@@ -21,9 +21,11 @@ export const auth=(req,res,next)=>{
         }
         
         const decode=jwt.verify(token, process.env.JWT_SECRET || "abhi123");
-        console.log(`Auth middleware: decoded user id=${decode.id}`);
+        console.log(`Auth middleware: decoded payload=`, decode);
         
-        req.user={id:decode.id};
+        // Handle both 'id' and 'userId' formats for compatibility
+        const userId = decode.id || decode.userId;
+        req.user={id:userId};
         next();
     }catch(error){
         console.log(`Auth middleware error: ${error.message}`);

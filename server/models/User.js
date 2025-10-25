@@ -37,13 +37,26 @@ const userSchema = new Schema({
         unique: true,
         match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
     },
+    googleId:{
+        type:String,
+        unique:true,
+        sparse:true, // sparse index allows multiple documents to have null values for this field
+    },
+    provider:{
+        type:String,
+        enum:["local","google"],
+        default:"local"
+    },
     password: {
         type: String,
-        required: true,
+        required: function() {
+           return this.provider === "local";
+        },
         minlength: 6,
     },
     avatar:{
         type:String,
+        default:null
     },
     roles: { type: [String], default: ["user"] },
     profile:{
