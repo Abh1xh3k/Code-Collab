@@ -6,6 +6,27 @@ import axios from 'axios';
 const Room = () => {
 
   const navigate = useNavigate();
+
+  // Handle OAuth redirect tokens
+  useEffect(() => {
+    // Check for OAuth redirect with token in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const userId = urlParams.get('userId');
+    const username = urlParams.get('username');
+    
+    if (token && userId && username) {
+      // Store OAuth tokens in localStorage
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('username', username);
+      
+      // Clean URL by removing parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      console.log('OAuth tokens stored successfully:', { userId, username });
+    }
+  }, []);
   const [mode, setMode] = useState('create'); // 'create' or 'join'
   const [showModal, setShowModal] = useState(false);
   const [createdRoomData, setCreatedRoomData] = useState(null);
@@ -378,8 +399,6 @@ const Room = () => {
           </p>
         </div>
       </main>
-
-      {/* Room Created Modal */}
       <RoomCreatedModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
