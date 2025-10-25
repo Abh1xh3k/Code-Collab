@@ -51,8 +51,8 @@ router.get('/google/callback',
                 ? 'http://localhost:5173' 
                 : process.env.FRONTEND_URL;
             
-            console.log('Redirecting to:', `${frontendUrl}/room`);
-            res.redirect(`${frontendUrl}/room`);
+            console.log('Redirecting to:', `https://code-collab-three-smoky.vercel.app/room`);
+            res.redirect(`https://code-collab-three-smoky.vercel.app/room`);
         } catch (error) {
             console.error('OAuth callback error:', error);
             const isLocalhost = req.get('host').includes('localhost');
