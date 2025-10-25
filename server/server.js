@@ -40,7 +40,7 @@ const corsOption = {
     origin: [
         "https://code-collab-2cj6-e9mi3e6qy-abhis-projects-82b05815.vercel.app",
         'http://localhost:5173',
-        "https://code-collab-three-smoky.vercel.app/", // production
+        "https://code-collab-three-smoky.vercel.app", // production
         "https://code-collab-git-main-abhis-projects-82b05815.vercel.app", // optional preview
         "https://code-collab-90z00scxa-abhis-projects-82b05815.vercel.app",
 
