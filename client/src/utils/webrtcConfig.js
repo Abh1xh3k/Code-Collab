@@ -14,60 +14,18 @@ export const getWebRTCConfig = () => {
     rtcpMuxPolicy: 'require'
   };
 
-  if (isProduction) {
-    // Production STUN + TURN servers
-    baseConfig.iceServers.push(
-      { urls: 'stun:stun3.l.google.com:19302' },
-      { urls: 'stun:stun4.l.google.com:19302' },
-
-      // TURN servers
-      {
-        urls: 'turn:openrelay.metered.ca:80',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turn:openrelay.metered.ca:443',
-        username: 'openrelayproject', 
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turn:relay.backups.cz',
-        username: 'webrtc',
-        credential: 'webrtc'
-      },
-      {
-        urls: 'turn:relay.backups.cz:3478',
-        username: 'webrtc',
-        credential: 'webrtc'
-      },
-      // Additional reliable fallback
-      {
-        urls: 'turn:global.relay.metered.ca:80',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turn:global.relay.metered.ca:443',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      }
-    );
-  } else {
-    // Development TURN servers (HTTP/less strict)
-    baseConfig.iceServers.push(
-      {
-        urls: 'turn:openrelay.metered.ca:80',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turn:numb.viagenie.ca:3478',
-        username: 'webrtc@live.com',
-        credential: 'muazkh'
-      }
-    );
-  }
+  // Use your custom coturn server for both production and development
+  baseConfig.iceServers.push(
+    // Your custom coturn server
+    {
+      urls: [
+        "stun:109.199.108.199:3478",
+        "turn:109.199.108.199:3478"
+      ],
+      username: "user",
+      credential: "password"
+    }
+  );
 
   return baseConfig;
 };
