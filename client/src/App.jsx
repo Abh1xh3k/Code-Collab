@@ -12,23 +12,6 @@ import axios from "axios";
 
 function App() {
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const userId = urlParams.get('userId');
-    const username = urlParams.get('username');
-    
-    if (token && userId && username) {
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userId', userId);
-      localStorage.setItem('username', username);
-      
-      // Clean URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      console.log('✅ OAuth tokens stored in App.jsx:', { userId, username });
-    }
-  }, [])
-  useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
