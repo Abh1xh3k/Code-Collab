@@ -9,24 +9,30 @@ const Room = () => {
 
   // Handle OAuth redirect tokens
   useEffect(() => {
-    // Check for OAuth redirect with token in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const userId = urlParams.get('userId');
-    const username = urlParams.get('username');
+  console.log(' Room.jsx: Component loaded, checking URL params...');
+  console.log(' Current URL:', window.location.href);
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  console.log(' All URL params:', Object.fromEntries(urlParams));
+  
+  const token = urlParams.get('token');
+  const userId = urlParams.get('userId');  
+  const username = urlParams.get('username');
+  
+  console.log('🎯 Extracted values:', { token: token?.substring(0, 20) + '...', userId, username });
+  
+  if (token && userId && username) {
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('userId', userId);
+    localStorage.setItem('username', username);
     
-    if (token && userId && username) {
-      // Store OAuth tokens in localStorage
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userId', userId);
-      localStorage.setItem('username', username);
-      
-      // Clean URL by removing parameters
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      console.log('OAuth tokens stored successfully:', { userId, username });
-    }
-  }, []);
+    console.log('✅ OAuth tokens stored successfully!');
+    
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else {
+    console.log('❌ Missing OAuth parameters:', { hasToken: !!token, hasUserId: !!userId, hasUsername: !!username });
+  }
+}, []);
   const [mode, setMode] = useState('create'); // 'create' or 'join'
   const [showModal, setShowModal] = useState(false);
   const [createdRoomData, setCreatedRoomData] = useState(null);
