@@ -12,6 +12,24 @@ const ProtectedRoute = ({ children }) => {
       console.log('🔍 ProtectedRoute: Starting authentication check...');
       
       try {
+        // First check for OAuth tokens in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlToken = urlParams.get('token');
+        const urlUserId = urlParams.get('userId');
+        const urlUsername = urlParams.get('username');
+        
+        if (urlToken && urlUserId && urlUsername) {
+          console.log('🎯 ProtectedRoute: Found OAuth tokens in URL, storing...');
+          localStorage.setItem('authToken', urlToken);
+          localStorage.setItem('userId', urlUserId);
+          localStorage.setItem('username', urlUsername);
+          
+          // Clean URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          console.log('✅ ProtectedRoute: OAuth tokens stored');
+        }
+        
         const token = localStorage.getItem('authToken');
         const userId = localStorage.getItem('userId');
         const username = localStorage.getItem('username');
