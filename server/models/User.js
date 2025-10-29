@@ -25,12 +25,19 @@ const profileSchema=new Schema({
 
 const userSchema = new Schema({
     username: {
-        type: String,
-        required: true,
-        unique: true,
-        minlength: 3,
-        maxlength: 10,
-    },
+    type: String,
+    required: true,
+    unique: true,
+    minlength: 3,
+    maxlength: 20, 
+    validate: {
+        validator: function(v) {
+            // Allow letters, numbers, underscores, hyphens but NO SPACES
+            return /^[a-zA-Z0-9_-]+$/.test(v);
+        },
+        message: 'Username can only contain letters, numbers, underscores, and hyphens (no spaces allowed)'
+    }
+},
     email: {
         type: String,
         required: true,

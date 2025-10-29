@@ -9,6 +9,17 @@ export const signup=async(req,res)=>{
         if(!username||!email||!password){
             return res.status(400).json({message:"Please enter all the fields"});
         }
+
+        if (username.includes(' ')) {
+            return res.status(400).json({message:"Username cannot contain spaces"});
+        }
+        if (username.length > 20) {
+            return res.status(400).json({message:"Username must be 20 characters or less"});
+        }
+        if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+            return res.status(400).json({message:"Username can only contain letters, numbers, underscores, and hyphens"});
+        }
+
         const exist = await User.findOne({
       $or: [{ username }, { email }],
     });
