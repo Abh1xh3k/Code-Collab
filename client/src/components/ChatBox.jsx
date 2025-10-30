@@ -543,7 +543,7 @@ const ChatBox = () => {
       sender: {
         _id: String(senderId || "unknown"),
         username: senderUsername,
-        avatar: raw.sender?.avatar || raw.avatar || null,
+        avatar: raw.sender?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${raw.sender.username.charAt(0).toUpperCase()}&backgroundColor=4ECDC4&fontSize=40`,
       },
       createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
     };
@@ -624,7 +624,7 @@ const ChatBox = () => {
         <div className={`flex items-end space-x-2 max-w-xs lg:max-w-md ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
           <img
             className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-            src={msg.sender.avatar || "/default-avatar.png"}
+            src={msg.sender.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${msg.sender.username.charAt(0).toUpperCase()}&backgroundColor=4ECDC4&fontSize=40`}
             alt={msg.sender.username}
           />
           <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
