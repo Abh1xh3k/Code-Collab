@@ -76,7 +76,7 @@ const ProfileEdit = () => {
       newErrors.name = 'Name is required';
     }
 
-
+                                                                                       
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
@@ -147,7 +147,8 @@ const ProfileEdit = () => {
           company: formData.company,
           location: formData.location,
           bio: formData.bio
-        }
+        },
+        avatar: profileImage
       };
 
       // Check if name or email changed (for future implementation)

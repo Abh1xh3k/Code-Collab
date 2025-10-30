@@ -37,6 +37,7 @@ const Room = () => {
   const [showModal, setShowModal] = useState(false);
   const [createdRoomData, setCreatedRoomData] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [userAvatar, setUserAvatar] = useState(null);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -51,6 +52,32 @@ const Room = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, []);
+
+  // Fetch user profile to get avatar
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+
+        const response = await axios.get(`${API_BASE_URL}/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        });
+
+        if (response.data && response.data.avatar) {
+          setUserAvatar(response.data.avatar);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    fetchUserProfile();
   }, []);
 
   const [createData, setCreateData] = useState({
@@ -240,7 +267,7 @@ const Room = () => {
               onClick={handleProfileClick}
               className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 hover:ring-2 hover:ring-gray-300 transition-all duration-200 cursor-pointer"
               style={{
-                backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuCJ6qfLxUn-IJAcVFSG8dRRYBZzFGeM-XgRgYC4EkaHmjJaZufe0D-6ZMNirC-x-BrAjbH6_yNcg8-rGw9nqZI0Zz1u1ah-BdXa-CjIHyUJ3n96UDJlmrSNR819r7mqPFw_Xoe9dOodfI6PgxmuBXcDKAvvvjiAWDc18LFFmFgvTDQPdZjHMd_voY88Xti7ENiPBDsymL1GpfHTdOoWwe5EmYZAF8mhlI_YQI2XrpGEfVE7Y6U3IvZ_yL8gebxZcvA7EuHcYCjZuZE")`
+                backgroundImage: `url("${userAvatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCJ6qfLxUn-IJAcVFSG8dRRYBZzFGeM-XgRgYC4EkaHmjJaZufe0D-6ZMNirC-x-BrAjbH6_yNcg8-rGw9nqZI0Zz1u1ah-BdXa-CjIHyUJ3n96UDJlmrSNR819r7mqPFw_Xoe9dOodfI6PgxmuBXcDKAvvvjiAWDc18LFFmFgvTDQPdZjHMd_voY88Xti7ENiPBDsymL1GpfHTdOoWwe5EmYZAF8mhlI_YQI2XrpGEfVE7Y6U3IvZ_yL8gebxZcvA7EuHcYCjZuZE'}")`
               }}
             ></button>
             

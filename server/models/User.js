@@ -75,7 +75,7 @@ const userSchema = new Schema({
         default:{}, // default empty object
     }
 
-}, { timestamp: true },
+}, { timestamps: true },
 );
 
 export default mongoose.models.User || mongoose.model("User", userSchema); // the first part is like cache of already compiled models in mongoose, so if the model is already compiled, it will use that instead of recompiling it again which can cause errors in some cases.
