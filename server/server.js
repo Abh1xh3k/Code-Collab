@@ -12,6 +12,7 @@ import chatRoutes from './routes/chatRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
 import passport from './config/passport.js';
 import session from 'express-session';
+import cron from 'node-cron';
 
 const app = express();
 const server = http.createServer(app);
@@ -49,6 +50,10 @@ const corsOption = {
     credentials: true,
 }
 app.use(cors(corsOption));
+cron.schedule("*/5 * * * *", () => {
+  console.log("Cron job executed at", new Date().toLocaleString());
+  
+});
 
 app.get('/', (req, res) => {
     res.send("server is running")
@@ -61,8 +66,10 @@ app.use('/api/room', roomRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/session', sessionRoutes);
 
+
 server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
+
 
 export { io };
